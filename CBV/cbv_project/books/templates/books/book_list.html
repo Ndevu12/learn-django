@@ -1,0 +1,40 @@
+{% extends "books/base.html" %}
+{% block title %}All Books{% endblock %}
+
+{% block content %}
+<h2>All Books</h2>
+
+<div class="actions">
+  <a href="{% url 'book-create' %}">+ Add New Book</a>
+</div>
+
+{% if books %}
+<table>
+  <thead>
+    <tr>
+      <th>Title</th>
+      <th>Author</th>
+      <th>Pages</th>
+      <th>Published</th>
+      <th>Actions</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for book in books %}
+    <tr>
+      <td><a href="{{ book.get_absolute_url }}">{{ book.title }}</a></td>
+      <td>{{ book.author }}</td>
+      <td>{{ book.pages }}</td>
+      <td>{{ book.pub_date }}</td>
+      <td>
+        <a href="{% url 'book-update' book.pk %}">Edit</a> |
+        <a href="{% url 'book-delete' book.pk %}">Delete</a>
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% else %}
+<p>No books yet. <a href="{% url 'book-create' %}">Add one</a>.</p>
+{% endif %}
+{% endblock %}

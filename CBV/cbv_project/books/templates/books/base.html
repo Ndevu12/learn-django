@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}Books{% endblock %} — CBV Project</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      margin: 0;
+      padding: 0;
+      background: #fafafa;
+      color: #333;
+    }
+    header {
+      background: #fff;
+      border-bottom: 1px solid #ddd;
+      padding: 1rem 2rem;
+    }
+    header a { color: #333; text-decoration: none; }
+    header a:hover { text-decoration: underline; }
+    .container {
+      max-width: 800px;
+      margin: 2rem auto;
+      padding: 0 1rem;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 1rem 0;
+    }
+    th, td {
+      border: 1px solid #ddd;
+      padding: 0.5rem 0.75rem;
+      text-align: left;
+    }
+    th { background: #f0f0f0; }
+    a { color: #0066cc; }
+    .actions { margin: 1rem 0; }
+    .actions a, .actions button {
+      margin-right: 0.5rem;
+    }
+    button {
+      padding: 0.4rem 1rem;
+      cursor: pointer;
+    }
+    .btn-danger {
+      background: #cc0000;
+      color: #fff;
+      border: 1px solid #aa0000;
+    }
+    label { display: block; margin-top: 0.75rem; font-weight: bold; }
+    input, select, textarea {
+      width: 100%;
+      padding: 0.4rem;
+      margin-top: 0.25rem;
+      border: 1px solid #ccc;
+      border-radius: 3px;
+    }
+    .form-actions {
+      margin-top: 1rem;
+    }
+    .delete-confirm {
+      max-width: 400px;
+      margin: 2rem auto;
+      text-align: center;
+    }
+    .delete-confirm p { margin: 1rem 0; }
+    dl { margin: 1rem 0; }
+    dt { font-weight: bold; margin-top: 0.75rem; }
+    dd { margin-left: 0; }
+  </style>
+</head>
+<body>
+  <header>
+    <a href="{% url 'book-list' %}"><strong>Book Manager</strong></a>
+  </header>
+
+  <div class="container">
+    {% block content %}{% endblock %}
+  </div>
+</body>
+</html>

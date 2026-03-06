@@ -1,0 +1,15 @@
+{% extends "books/base.html" %}
+{% block title %}{% if object %}Edit{% else %}New{% endif %} Book{% endblock %}
+
+{% block content %}
+<h2>{% if object %}Edit "{{ object.title }}"{% else %}New Book{% endif %}</h2>
+
+<form method="post">
+  {% csrf_token %}
+  {{ form.as_p }}
+  <div class="form-actions">
+    <button type="submit">Save</button>
+    <a href="{% url 'book-list' %}">Cancel</a>
+  </div>
+</form>
+{% endblock %}
