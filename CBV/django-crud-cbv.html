@@ -1,0 +1,720 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Django CRUD in Action</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;600;700&family=Fraunces:ital,wght@0,300;0,600;0,900;1,300;1,600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles/index.css">
+</head>
+<body>
+
+<header>
+  <button class="menu-toggle" onclick="toggleSidebar()" aria-label="Toggle sidebar">
+    <span></span><span></span><span></span>
+  </button>
+  <div class="logo">Django</div>
+  <div class="header-tag">CRUD in Action</div>
+  <nav>
+    <button class="active" onclick="showSection('overview',this)">Overview</button>
+    <button onclick="showSection('setup',this)">Setup</button>
+    <button onclick="showSection('fbv',this)">FBV → CBV</button>
+    <button onclick="showSection('cbv',this)">CBV Deep-Dive</button>
+    <button onclick="showSection('templates',this)">Templates</button>
+    <button onclick="showSection('urls',this)">URLs</button>
+    <button onclick="showSection('quiz',this)">Quiz</button>
+  </nav>
+</header>
+<div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+<div class="layout">
+  <!-- ── Sidebar ── -->
+  <aside>
+    <div class="sidebar-section">
+      <div class="sidebar-label">Sections</div>
+      <a class="sidebar-item active" onclick="showSection('overview',null,this)">
+        <div class="sidebar-dot"></div>Overview
+      </a>
+      <a class="sidebar-item" onclick="showSection('setup',null,this)">
+        <div class="sidebar-dot"></div>Project Setup
+      </a>
+      <a class="sidebar-item" onclick="showSection('fbv',null,this)">
+        <div class="sidebar-dot"></div>FBV → CBV Migration
+      </a>
+      <a class="sidebar-item" onclick="showSection('cbv',null,this)">
+        <div class="sidebar-dot"></div>CBV Deep-Dive
+      </a>
+      <a class="sidebar-item" onclick="showSection('templates',null,this)">
+        <div class="sidebar-dot"></div>Templates
+      </a>
+      <a class="sidebar-item" onclick="showSection('urls',null,this)">
+        <div class="sidebar-dot"></div>URL Routing
+      </a>
+      <a class="sidebar-item" onclick="showSection('quiz',null,this)">
+        <div class="sidebar-dot"></div>Knowledge Quiz
+      </a>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-label">CBV Reference</div>
+      <a class="sidebar-item" onclick="showSection('cbv',null,this);scrollTo('listview')">
+        <div class="sidebar-dot"></div>ListView
+      </a>
+      <a class="sidebar-item" onclick="showSection('cbv',null,this);scrollTo('detailview')">
+        <div class="sidebar-dot"></div>DetailView
+      </a>
+      <a class="sidebar-item" onclick="showSection('cbv',null,this);scrollTo('createview')">
+        <div class="sidebar-dot"></div>CreateView
+      </a>
+      <a class="sidebar-item" onclick="showSection('cbv',null,this);scrollTo('updateview')">
+        <div class="sidebar-dot"></div>UpdateView
+      </a>
+      <a class="sidebar-item" onclick="showSection('cbv',null,this);scrollTo('deleteview')">
+        <div class="sidebar-dot"></div>DeleteView
+      </a>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-label">Key Concepts</div>
+      <a class="sidebar-item" style="font-size:0.68rem">
+        <div class="sidebar-dot"></div>model = YourModel
+      </a>
+      <a class="sidebar-item" style="font-size:0.68rem">
+        <div class="sidebar-dot"></div>fields = [...]
+      </a>
+      <a class="sidebar-item" style="font-size:0.68rem">
+        <div class="sidebar-dot"></div>success_url
+      </a>
+      <a class="sidebar-item" style="font-size:0.68rem">
+        <div class="sidebar-dot"></div>get_queryset()
+      </a>
+    </div>
+  </aside>
+
+  <!-- ── Main ── -->
+  <main>
+
+    <!-- ════════════════════════════════ OVERVIEW ═══════════ -->
+    <section id="overview" class="section active">
+      <h1>Django CRUD<br><em>in Action</em></h1>
+      <p class="lead">Building a full Create · Read · Update · Delete workflow using Class-Based Views to write less, do more.</p>
+
+      <p>CRUD is the backbone of almost every web application. Django gives you two paths to implement it: <strong>Function-Based Views (FBV)</strong> — explicit and readable — and <strong>Class-Based Views (CBV)</strong> — concise, reusable, and DRY.</p>
+
+      <div class="callout callout-info">
+        <strong>📦 What we'll build</strong>
+        A <code class="ic">Book</code> management app — list all books, view one book, create, edit, and delete. A classic CRUD app you can adapt to any model.
+      </div>
+
+      <h2>The CRUD Map</h2>
+      <p>Every operation maps to an HTTP verb, a URL pattern, and a CBV:</p>
+
+      <table class="crud-table">
+        <thead>
+          <tr>
+            <th>Operation</th><th>HTTP Method</th><th>URL Example</th><th>CBV</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="pill pill-blue">READ list</span></td>
+            <td>GET</td><td><code>/books/</code></td>
+            <td><code class="ic">ListView</code></td>
+          </tr>
+          <tr>
+            <td><span class="pill pill-blue">READ one</span></td>
+            <td>GET</td><td><code>/books/3/</code></td>
+            <td><code class="ic">DetailView</code></td>
+          </tr>
+          <tr>
+            <td><span class="pill pill-green">CREATE</span></td>
+            <td>GET + POST</td><td><code>/books/new/</code></td>
+            <td><code class="ic">CreateView</code></td>
+          </tr>
+          <tr>
+            <td><span class="pill pill-orange">UPDATE</span></td>
+            <td>GET + POST</td><td><code>/books/3/edit/</code></td>
+            <td><code class="ic">UpdateView</code></td>
+          </tr>
+          <tr>
+            <td><span class="pill pill-red">DELETE</span></td>
+            <td>GET + POST</td><td><code>/books/3/delete/</code></td>
+            <td><code class="ic">DeleteView</code></td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h2>Request → Response Flow</h2>
+      <div class="flow">
+        <div class="flow-step">Browser<span>HTTP Request</span></div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-step" style="border-color:#38bdf8;color:#38bdf8">urls.py<span>Route match</span></div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-step" style="border-color:#4ade80;color:#4ade80">CBV<span>dispatch()</span></div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-step" style="border-color:#fb923c;color:#fb923c">Template<span>render()</span></div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-step">Browser<span>HTML Response</span></div>
+      </div>
+
+      <div class="callout callout-tip">
+        <strong>💡 Why CBVs?</strong>
+        A function-based CreateView is typically 20–30 lines. The CBV equivalent is 4 lines. Django handles form rendering, validation, saving, and redirects automatically.
+      </div>
+
+      <h2>The Model We'll Use</h2>
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-filename">books/models.py</span>
+          <span class="code-lang lang-python">Python</span>
+        </div>
+        <pre><code><span class="kw">from</span> django.db <span class="kw">import</span> models
+
+<span class="kw">class</span> <span class="cl">Book</span>(models.<span class="cl">Model</span>):
+    title   <span class="op">=</span> models.<span class="fn">CharField</span>(max_length<span class="op">=</span><span class="nu">200</span>)
+    author  <span class="op">=</span> models.<span class="fn">CharField</span>(max_length<span class="op">=</span><span class="nu">100</span>)
+    pages   <span class="op">=</span> models.<span class="fn">IntegerField</span>()
+    pub_date<span class="op">=</span> models.<span class="fn">DateField</span>()
+
+    <span class="kw">def</span> <span class="fn">__str__</span>(<span class="dt">self</span>):
+        <span class="kw">return</span> <span class="dt">self</span>.title
+
+    <span class="kw">def</span> <span class="fn">get_absolute_url</span>(<span class="dt">self</span>):
+        <span class="kw">from</span> django.urls <span class="kw">import</span> reverse
+        <span class="kw">return</span> <span class="fn">reverse</span>(<span class="st">'book-detail'</span>, kwargs<span class="op">=</span>{<span class="st">'pk'</span>: <span class="dt">self</span>.pk})</code></pre>
+      </div>
+      <div class="callout callout-key">
+        <strong>🔑 get_absolute_url()</strong>
+        CBVs like <code class="ic">CreateView</code> and <code class="ic">UpdateView</code> redirect to <code class="ic">get_absolute_url()</code> by default after a successful save — so always define it on your model!
+      </div>
+    </section>
+
+    <!-- ════════════════════════════════ SETUP ═══════════ -->
+    <section id="setup" class="section">
+      <h1>Project <em>Setup</em></h1>
+      <p class="lead">Getting the Django project and app ready for our CRUD workflow.</p>
+
+      <h2>Create the Project</h2>
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">1</div>
+          <div class="step-body">
+            <div class="step-title">Create & activate a virtual environment</div>
+            <div class="code-block"><div class="code-header"><span class="code-filename">terminal</span><span class="code-lang lang-bash">bash</span></div>
+<pre><code>python -m venv venv
+source venv/bin/activate       <span class="cm"># Windows: venv\Scripts\activate</span>
+pip install django</code></pre></div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <div class="step-body">
+            <div class="step-title">Create project and app</div>
+            <div class="code-block"><div class="code-header"><span class="code-filename">terminal</span><span class="code-lang lang-bash">bash</span></div>
+<pre><code>django-admin startproject mysite .
+python manage.py startapp books</code></pre></div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">3</div>
+          <div class="step-body">
+            <div class="step-title">Register the app in settings</div>
+            <div class="code-block"><div class="code-header"><span class="code-filename">mysite/settings.py</span><span class="code-lang lang-python">Python</span></div>
+<pre><code>INSTALLED_APPS <span class="op">=</span> [
+    <span class="cm"># ... built-ins ...</span>
+    <span class="st">'books'</span>,   <span class="cm"># ← add this</span>
+]</code></pre></div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">4</div>
+          <div class="step-body">
+            <div class="step-title">Define the model, then migrate</div>
+            <div class="code-block"><div class="code-header"><span class="code-filename">terminal</span><span class="code-lang lang-bash">bash</span></div>
+<pre><code>python manage.py makemigrations
+python manage.py migrate
+python manage.py createsuperuser   <span class="cm"># optional</span></code></pre></div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">5</div>
+          <div class="step-body">
+            <div class="step-title">Wire up the books URLs in the project</div>
+            <div class="code-block"><div class="code-header"><span class="code-filename">mysite/urls.py</span><span class="code-lang lang-python">Python</span></div>
+<pre><code><span class="kw">from</span> django.urls <span class="kw">import</span> path, include
+
+urlpatterns <span class="op">=</span> [
+    path(<span class="st">'books/'</span>, include(<span class="st">'books.urls'</span>)),
+]</code></pre></div>
+          </div>
+        </div>
+      </div>
+
+      <h2>Recommended File Structure</h2>
+      <div class="code-block">
+        <div class="code-header"><span class="code-filename">project tree</span><span class="code-lang lang-bash">bash</span></div>
+        <pre><code>mysite/
+├── mysite/
+│   ├── settings.py
+│   └── urls.py
+└── books/
+    ├── migrations/
+    ├── templates/
+    │   └── books/
+    │       ├── book_list.html
+    │       ├── book_detail.html
+    │       ├── book_form.html
+    │       └── book_confirm_delete.html
+    ├── models.py
+    ├── views.py
+    └── urls.py</code></pre>
+      </div>
+    </section>
+
+    <!-- ════════════════════════════════ FBV vs CBV ═══════════ -->
+    <section id="fbv" class="section">
+      <h1>FBV → <em>CBV</em></h1>
+      <p class="lead">See exactly how a Function-Based View transforms into a Class-Based View — same behaviour, far less code.</p>
+
+      <div class="callout callout-info">
+        <strong>ℹ️ Toggle between implementations</strong>
+        Both code blocks below produce identical behaviour. The CBV version delegates boilerplate to Django's generic views.
+      </div>
+
+      <h2>The List View (READ all)</h2>
+      <div class="compare-toggle">
+        <button class="compare-btn active" onclick="toggleCompare('list','fbv',this)">FBV — Function</button>
+        <button class="compare-btn" onclick="toggleCompare('list','cbv',this)">CBV — Class</button>
+      </div>
+      <div id="list-fbv" class="compare-content active">
+        <div class="code-block">
+          <div class="code-header"><span class="code-filename">books/views.py  (FBV)</span><span class="code-lang lang-python">Python</span></div>
+          <pre><code><span class="kw">from</span> django.shortcuts <span class="kw">import</span> render
+<span class="kw">from</span> .models <span class="kw">import</span> Book
+
+<span class="kw">def</span> <span class="fn">book_list</span>(request):
+    books <span class="op">=</span> Book.objects.<span class="fn">all</span>()
+    <span class="kw">return</span> <span class="fn">render</span>(request, <span class="st">'books/book_list.html'</span>, {<span class="st">'books'</span>: books})</code></pre>
+        </div>
+      </div>
+      <div id="list-cbv" class="compare-content">
+        <div class="code-block">
+          <div class="code-header"><span class="code-filename">books/views.py  (CBV)</span><span class="code-lang lang-python">Python</span></div>
+          <pre><code><span class="kw">from</span> django.views.generic <span class="kw">import</span> ListView
+<span class="kw">from</span> .models <span class="kw">import</span> Book
+
+<span class="kw">class</span> <span class="cl">BookListView</span>(<span class="cl">ListView</span>):
+    model <span class="op">=</span> <span class="cl">Book</span>
+    <span class="cm"># auto template: books/book_list.html</span>
+    <span class="cm"># auto context:  object_list  (or book_list)</span></code></pre>
+        </div>
+      </div>
+
+      <h2>The Create View (CREATE)</h2>
+      <div class="compare-toggle">
+        <button class="compare-btn active" onclick="toggleCompare('create','fbv',this)">FBV — Function</button>
+        <button class="compare-btn" onclick="toggleCompare('create','cbv',this)">CBV — Class</button>
+      </div>
+      <div id="create-fbv" class="compare-content active">
+        <div class="code-block">
+          <div class="code-header"><span class="code-filename">books/views.py  (FBV)</span><span class="code-lang lang-python">Python</span></div>
+          <pre><code><span class="kw">from</span> django.shortcuts <span class="kw">import</span> render, redirect
+<span class="kw">from</span> .forms <span class="kw">import</span> BookForm
+
+<span class="kw">def</span> <span class="fn">book_create</span>(request):
+    <span class="kw">if</span> request.method <span class="op">==</span> <span class="st">'POST'</span>:
+        form <span class="op">=</span> <span class="fn">BookForm</span>(request.POST)
+        <span class="kw">if</span> form.<span class="fn">is_valid</span>():
+            book <span class="op">=</span> form.<span class="fn">save</span>()
+            <span class="kw">return</span> <span class="fn">redirect</span>(book)
+    <span class="kw">else</span>:
+        form <span class="op">=</span> <span class="fn">BookForm</span>()
+    <span class="kw">return</span> <span class="fn">render</span>(request, <span class="st">'books/book_form.html'</span>, {<span class="st">'form'</span>: form})</code></pre>
+        </div>
+      </div>
+      <div id="create-cbv" class="compare-content">
+        <div class="code-block">
+          <div class="code-header"><span class="code-filename">books/views.py  (CBV)</span><span class="code-lang lang-python">Python</span></div>
+          <pre><code><span class="kw">from</span> django.views.generic.edit <span class="kw">import</span> CreateView
+<span class="kw">from</span> .models <span class="kw">import</span> Book
+
+<span class="kw">class</span> <span class="cl">BookCreateView</span>(<span class="cl">CreateView</span>):
+    model  <span class="op">=</span> <span class="cl">Book</span>
+    fields <span class="op">=</span> [<span class="st">'title'</span>, <span class="st">'author'</span>, <span class="st">'pages'</span>, <span class="st">'pub_date'</span>]
+    <span class="cm"># GET:  renders book_form.html with empty form</span>
+    <span class="cm"># POST: validates, saves, redirects to get_absolute_url()</span></code></pre>
+        </div>
+      </div>
+
+      <div class="callout callout-tip">
+        <strong>🏆 The Pattern</strong>
+        The FBV must manually: instantiate the form twice, check the method, call <code class="ic">is_valid()</code>, save, redirect, and render. The CBV does all of this automatically when you set <code class="ic">model</code> and <code class="ic">fields</code>.
+      </div>
+    </section>
+
+    <!-- ════════════════════════════════ CBV DEEP DIVE ═══════════ -->
+    <section id="cbv" class="section">
+      <h1>CBV <em>Deep-Dive</em></h1>
+      <p class="lead">Every generic CBV you need for a full CRUD workflow, with all the knobs you can turn.</p>
+
+      <div class="cbv-grid">
+        <div class="cbv-card">
+          <div class="cbv-name">ListView</div>
+          <div class="cbv-http">GET /books/</div>
+          <div class="cbv-desc">Fetches all objects and passes them to a template as <code>object_list</code> (or <code>book_list</code>).</div>
+        </div>
+        <div class="cbv-card">
+          <div class="cbv-name">DetailView</div>
+          <div class="cbv-http">GET /books/&lt;pk&gt;/</div>
+          <div class="cbv-desc">Fetches one object by <code>pk</code> or <code>slug</code>. Raises 404 automatically if not found.</div>
+        </div>
+        <div class="cbv-card">
+          <div class="cbv-name">CreateView</div>
+          <div class="cbv-http">GET + POST /books/new/</div>
+          <div class="cbv-desc">Renders a ModelForm, validates on POST, saves, and redirects to <code>get_absolute_url()</code>.</div>
+        </div>
+        <div class="cbv-card">
+          <div class="cbv-name">UpdateView</div>
+          <div class="cbv-http">GET + POST /books/&lt;pk&gt;/edit/</div>
+          <div class="cbv-desc">Like CreateView, but pre-fills the form with existing data. Same template (<code>book_form.html</code>) by default.</div>
+        </div>
+        <div class="cbv-card">
+          <div class="cbv-name">DeleteView</div>
+          <div class="cbv-http">GET + POST /books/&lt;pk&gt;/delete/</div>
+          <div class="cbv-desc">GET shows a confirmation page. POST deletes and redirects to <code>success_url</code>.</div>
+        </div>
+      </div>
+
+      <h2 id="listview">ListView — Full Example</h2>
+      <div class="code-block">
+        <div class="code-header"><span class="code-filename">books/views.py</span><span class="code-lang lang-python">Python</span></div>
+        <pre><code><span class="kw">from</span> django.views.generic <span class="kw">import</span> ListView
+
+<span class="kw">class</span> <span class="cl">BookListView</span>(<span class="cl">ListView</span>):
+    model               <span class="op">=</span> <span class="cl">Book</span>
+    template_name       <span class="op">=</span> <span class="st">'books/book_list.html'</span>   <span class="cm"># default</span>
+    context_object_name <span class="op">=</span> <span class="st">'books'</span>                   <span class="cm"># default: object_list</span>
+    paginate_by         <span class="op">=</span> <span class="nu">10</span>                        <span class="cm"># optional pagination</span>
+    ordering            <span class="op">=</span> [<span class="st">'-pub_date'</span>]             <span class="cm"># newest first</span>
+
+    <span class="kw">def</span> <span class="fn">get_queryset</span>(<span class="dt">self</span>):
+        <span class="cm"># override to filter — e.g., search by query param</span>
+        qs <span class="op">=</span> <span class="kw">super</span>().<span class="fn">get_queryset</span>()
+        q  <span class="op">=</span> <span class="dt">self</span>.request.<span class="fn">GET.get</span>(<span class="st">'q'</span>)
+        <span class="kw">if</span> q:
+            qs <span class="op">=</span> qs.<span class="fn">filter</span>(title__icontains<span class="op">=</span>q)
+        <span class="kw">return</span> qs</code></pre>
+      </div>
+
+      <h2 id="detailview">DetailView — Full Example</h2>
+      <div class="code-block">
+        <div class="code-header"><span class="code-filename">books/views.py</span><span class="code-lang lang-python">Python</span></div>
+        <pre><code><span class="kw">from</span> django.views.generic <span class="kw">import</span> DetailView
+
+<span class="kw">class</span> <span class="cl">BookDetailView</span>(<span class="cl">DetailView</span>):
+    model               <span class="op">=</span> <span class="cl">Book</span>
+    template_name       <span class="op">=</span> <span class="st">'books/book_detail.html'</span>  <span class="cm"># default</span>
+    context_object_name <span class="op">=</span> <span class="st">'book'</span>                     <span class="cm"># default: object</span>
+
+    <span class="kw">def</span> <span class="fn">get_context_data</span>(<span class="dt">self</span>, **kwargs):
+        <span class="cm"># add extra context variables to the template</span>
+        ctx <span class="op">=</span> <span class="kw">super</span>().<span class="fn">get_context_data</span>(**kwargs)
+        ctx[<span class="st">'related'</span>] <span class="op">=</span> <span class="cl">Book</span>.objects.<span class="fn">filter</span>(
+            author<span class="op">=</span><span class="dt">self</span>.object.author
+        ).<span class="fn">exclude</span>(pk<span class="op">=</span><span class="dt">self</span>.object.pk)
+        <span class="kw">return</span> ctx</code></pre>
+      </div>
+
+      <h2 id="createview">CreateView — Full Example</h2>
+      <div class="code-block">
+        <div class="code-header"><span class="code-filename">books/views.py</span><span class="code-lang lang-python">Python</span></div>
+        <pre><code><span class="kw">from</span> django.views.generic.edit <span class="kw">import</span> CreateView
+<span class="kw">from</span> django.urls <span class="kw">import</span> reverse_lazy
+
+<span class="kw">class</span> <span class="cl">BookCreateView</span>(<span class="cl">CreateView</span>):
+    model         <span class="op">=</span> <span class="cl">Book</span>
+    fields        <span class="op">=</span> [<span class="st">'title'</span>, <span class="st">'author'</span>, <span class="st">'pages'</span>, <span class="st">'pub_date'</span>]
+    <span class="cm"># OR: form_class = BookModelForm   (to use a custom ModelForm)</span>
+
+    <span class="kw">def</span> <span class="fn">form_valid</span>(<span class="dt">self</span>, form):
+        <span class="cm"># hook: runs after valid submission, before redirect</span>
+        <span class="cm"># e.g., attach logged-in user: form.instance.owner = self.request.user</span>
+        <span class="kw">return</span> <span class="kw">super</span>().<span class="fn">form_valid</span>(form)</code></pre>
+      </div>
+
+      <h2 id="updateview">UpdateView — Full Example</h2>
+      <div class="code-block">
+        <div class="code-header"><span class="code-filename">books/views.py</span><span class="code-lang lang-python">Python</span></div>
+        <pre><code><span class="kw">from</span> django.views.generic.edit <span class="kw">import</span> UpdateView
+
+<span class="kw">class</span> <span class="cl">BookUpdateView</span>(<span class="cl">UpdateView</span>):
+    model         <span class="op">=</span> <span class="cl">Book</span>
+    fields        <span class="op">=</span> [<span class="st">'title'</span>, <span class="st">'author'</span>, <span class="st">'pages'</span>, <span class="st">'pub_date'</span>]
+    template_name <span class="op">=</span> <span class="st">'books/book_form.html'</span>  <span class="cm"># same template as Create!</span>
+    <span class="cm"># success_url defaults to get_absolute_url()</span></code></pre>
+      </div>
+
+      <h2 id="deleteview">DeleteView — Full Example</h2>
+      <div class="code-block">
+        <div class="code-header"><span class="code-filename">books/views.py</span><span class="code-lang lang-python">Python</span></div>
+        <pre><code><span class="kw">from</span> django.views.generic.edit <span class="kw">import</span> DeleteView
+<span class="kw">from</span> django.urls <span class="kw">import</span> reverse_lazy
+
+<span class="kw">class</span> <span class="cl">BookDeleteView</span>(<span class="cl">DeleteView</span>):
+    model       <span class="op">=</span> <span class="cl">Book</span>
+    success_url <span class="op">=</span> <span class="fn">reverse_lazy</span>(<span class="st">'book-list'</span>)
+    <span class="cm"># GET  → renders book_confirm_delete.html with {{ object }}</span>
+    <span class="cm"># POST → deletes and redirects to success_url</span></code></pre>
+      </div>
+
+      <div class="callout callout-warn">
+        <strong>⚠️ reverse_lazy vs reverse</strong>
+        Use <code class="ic">reverse_lazy()</code> for class-level attributes like <code class="ic">success_url</code> because the URL conf isn't loaded yet when the class is defined. Use <code class="ic">reverse()</code> inside methods like <code class="ic">get_success_url()</code> instead.
+      </div>
+
+      <h2>The Complete views.py</h2>
+      <div class="code-block">
+        <div class="code-header"><span class="code-filename">books/views.py  (all 5 CBVs)</span><span class="code-lang lang-python">Python</span></div>
+        <pre><code><span class="kw">from</span> django.views.generic       <span class="kw">import</span> ListView, DetailView
+<span class="kw">from</span> django.views.generic.edit  <span class="kw">import</span> CreateView, UpdateView, DeleteView
+<span class="kw">from</span> django.urls                 <span class="kw">import</span> reverse_lazy
+<span class="kw">from</span> .models                     <span class="kw">import</span> Book
+
+<span class="kw">class</span> <span class="cl">BookListView</span>(<span class="cl">ListView</span>):
+    model               <span class="op">=</span> <span class="cl">Book</span>
+    context_object_name <span class="op">=</span> <span class="st">'books'</span>
+    ordering            <span class="op">=</span> [<span class="st">'-pub_date'</span>]
+
+<span class="kw">class</span> <span class="cl">BookDetailView</span>(<span class="cl">DetailView</span>):
+    model               <span class="op">=</span> <span class="cl">Book</span>
+    context_object_name <span class="op">=</span> <span class="st">'book'</span>
+
+<span class="kw">class</span> <span class="cl">BookCreateView</span>(<span class="cl">CreateView</span>):
+    model  <span class="op">=</span> <span class="cl">Book</span>
+    fields <span class="op">=</span> [<span class="st">'title'</span>, <span class="st">'author'</span>, <span class="st">'pages'</span>, <span class="st">'pub_date'</span>]
+
+<span class="kw">class</span> <span class="cl">BookUpdateView</span>(<span class="cl">UpdateView</span>):
+    model  <span class="op">=</span> <span class="cl">Book</span>
+    fields <span class="op">=</span> [<span class="st">'title'</span>, <span class="st">'author'</span>, <span class="st">'pages'</span>, <span class="st">'pub_date'</span>]
+
+<span class="kw">class</span> <span class="cl">BookDeleteView</span>(<span class="cl">DeleteView</span>):
+    model       <span class="op">=</span> <span class="cl">Book</span>
+    success_url <span class="op">=</span> <span class="fn">reverse_lazy</span>(<span class="st">'book-list'</span>)</code></pre>
+      </div>
+    </section>
+
+    <!-- ════════════════════════════════ TEMPLATES ═══════════ -->
+    <section id="templates" class="section">
+      <h1>The <em>Templates</em></h1>
+      <p class="lead">Four templates — one for each interaction. CBVs infer the name automatically from your model and app.</p>
+
+      <h2>Automatic Template Names</h2>
+      <table class="crud-table">
+        <thead>
+          <tr><th>CBV</th><th>Auto Template</th><th>Context Variable</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><code class="ic">ListView</code></td><td><code>books/book_list.html</code></td><td><code>object_list</code> / <code>book_list</code></td></tr>
+          <tr><td><code class="ic">DetailView</code></td><td><code>books/book_detail.html</code></td><td><code>object</code> / <code>book</code></td></tr>
+          <tr><td><code class="ic">CreateView</code></td><td><code>books/book_form.html</code></td><td><code>form</code></td></tr>
+          <tr><td><code class="ic">UpdateView</code></td><td><code>books/book_form.html</code></td><td><code>form</code>, <code>object</code></td></tr>
+          <tr><td><code class="ic">DeleteView</code></td><td><code>books/book_confirm_delete.html</code></td><td><code>object</code></td></tr>
+        </tbody>
+      </table>
+
+      <h3>book_list.html</h3>
+      <div class="code-block">
+        <div class="code-header"><span class="code-filename">books/templates/books/book_list.html</span><span class="code-lang lang-html">HTML</span></div>
+        <pre><code><span class="ht">&lt;h1&gt;</span>All Books<span class="ht">&lt;/h1&gt;</span>
+<span class="ht">&lt;a</span> <span class="ha">href</span><span class="op">=</span><span class="hv">"{% url 'book-create' %}"</span><span class="ht">&gt;</span>+ New Book<span class="ht">&lt;/a&gt;</span>
+
+<span class="ht">&lt;ul&gt;</span>
+{% for book in books %}
+  <span class="ht">&lt;li&gt;</span>
+    <span class="ht">&lt;a</span> <span class="ha">href</span><span class="op">=</span><span class="hv">"{{ book.get_absolute_url }}"</span><span class="ht">&gt;</span>{{ book.title }}<span class="ht">&lt;/a&gt;</span>
+    — {{ book.author }}
+    <span class="ht">&lt;a</span> <span class="ha">href</span><span class="op">=</span><span class="hv">"{% url 'book-update' book.pk %}"</span><span class="ht">&gt;</span>Edit<span class="ht">&lt;/a&gt;</span>
+    <span class="ht">&lt;a</span> <span class="ha">href</span><span class="op">=</span><span class="hv">"{% url 'book-delete' book.pk %}"</span><span class="ht">&gt;</span>Delete<span class="ht">&lt;/a&gt;</span>
+  <span class="ht">&lt;/li&gt;</span>
+{% empty %}
+  <span class="ht">&lt;li&gt;</span>No books yet.<span class="ht">&lt;/li&gt;</span>
+{% endfor %}
+<span class="ht">&lt;/ul&gt;</span></code></pre>
+      </div>
+
+      <h3>book_detail.html</h3>
+      <div class="code-block">
+        <div class="code-header"><span class="code-filename">books/templates/books/book_detail.html</span><span class="code-lang lang-html">HTML</span></div>
+        <pre><code><span class="ht">&lt;h1&gt;</span>{{ book.title }}<span class="ht">&lt;/h1&gt;</span>
+<span class="ht">&lt;p&gt;</span>Author: {{ book.author }}<span class="ht">&lt;/p&gt;</span>
+<span class="ht">&lt;p&gt;</span>Pages: {{ book.pages }}<span class="ht">&lt;/p&gt;</span>
+<span class="ht">&lt;p&gt;</span>Published: {{ book.pub_date }}<span class="ht">&lt;/p&gt;</span>
+
+<span class="ht">&lt;a</span> <span class="ha">href</span><span class="op">=</span><span class="hv">"{% url 'book-update' book.pk %}"</span><span class="ht">&gt;</span>Edit<span class="ht">&lt;/a&gt;</span>
+<span class="ht">&lt;a</span> <span class="ha">href</span><span class="op">=</span><span class="hv">"{% url 'book-delete' book.pk %}"</span><span class="ht">&gt;</span>Delete<span class="ht">&lt;/a&gt;</span>
+<span class="ht">&lt;a</span> <span class="ha">href</span><span class="op">=</span><span class="hv">"{% url 'book-list' %}"</span><span class="ht">&gt;</span>← Back<span class="ht">&lt;/a&gt;</span></code></pre>
+      </div>
+
+      <h3>book_form.html  (Create & Update share this!)</h3>
+      <div class="code-block">
+        <div class="code-header"><span class="code-filename">books/templates/books/book_form.html</span><span class="code-lang lang-html">HTML</span></div>
+        <pre><code><span class="ht">&lt;h1&gt;</span>{% if object %}Edit{% else %}New{% endif %} Book<span class="ht">&lt;/h1&gt;</span>
+
+<span class="ht">&lt;form</span> <span class="ha">method</span><span class="op">=</span><span class="hv">"post"</span><span class="ht">&gt;</span>
+  {% csrf_token %}
+  {{ form.as_p }}
+  <span class="ht">&lt;button</span> <span class="ha">type</span><span class="op">=</span><span class="hv">"submit"</span><span class="ht">&gt;</span>Save<span class="ht">&lt;/button&gt;</span>
+<span class="ht">&lt;/form&gt;</span>
+
+<span class="ht">&lt;a</span> <span class="ha">href</span><span class="op">=</span><span class="hv">"{% url 'book-list' %}"</span><span class="ht">&gt;</span>Cancel<span class="ht">&lt;/a&gt;</span></code></pre>
+      </div>
+
+      <h3>book_confirm_delete.html</h3>
+      <div class="code-block">
+        <div class="code-header"><span class="code-filename">books/templates/books/book_confirm_delete.html</span><span class="code-lang lang-html">HTML</span></div>
+        <pre><code><span class="ht">&lt;h1&gt;</span>Delete "{{ object.title }}"?<span class="ht">&lt;/h1&gt;</span>
+<span class="ht">&lt;p&gt;</span>This action cannot be undone.<span class="ht">&lt;/p&gt;</span>
+
+<span class="ht">&lt;form</span> <span class="ha">method</span><span class="op">=</span><span class="hv">"post"</span><span class="ht">&gt;</span>
+  {% csrf_token %}
+  <span class="ht">&lt;button</span> <span class="ha">type</span><span class="op">=</span><span class="hv">"submit"</span><span class="ht">&gt;</span>Yes, Delete<span class="ht">&lt;/button&gt;</span>
+<span class="ht">&lt;/form&gt;</span>
+
+<span class="ht">&lt;a</span> <span class="ha">href</span><span class="op">=</span><span class="hv">"{{ object.get_absolute_url }}"</span><span class="ht">&gt;</span>Cancel<span class="ht">&lt;/a&gt;</span></code></pre>
+      </div>
+
+      <div class="callout callout-tip">
+        <strong>💡 {% csrf_token %}</strong>
+        Always include <code class="ic">{% csrf_token %}</code> in every POST form. Django rejects POST requests that don't include it — it's a security feature protecting against Cross-Site Request Forgery.
+      </div>
+    </section>
+
+    <!-- ════════════════════════════════ URLs ═══════════ -->
+    <section id="urls" class="section">
+      <h1>URL <em>Routing</em></h1>
+      <p class="lead">The final piece — mapping URL patterns to your CBVs using .as_view().</p>
+
+      <div class="callout callout-key">
+        <strong>🔑 .as_view()</strong>
+        CBVs are classes, but Django's URL dispatcher expects callables. <code class="ic">MyView.as_view()</code> converts the class into a view function. Never forget this!
+      </div>
+
+      <h2>books/urls.py</h2>
+      <div class="code-block">
+        <div class="code-header"><span class="code-filename">books/urls.py</span><span class="code-lang lang-python">Python</span></div>
+        <pre><code><span class="kw">from</span> django.urls <span class="kw">import</span> path
+<span class="kw">from</span> .views <span class="kw">import</span> (
+    <span class="cl">BookListView</span>, <span class="cl">BookDetailView</span>,
+    <span class="cl">BookCreateView</span>, <span class="cl">BookUpdateView</span>, <span class="cl">BookDeleteView</span>
+)
+
+urlpatterns <span class="op">=</span> [
+    path(<span class="st">''</span>,                  <span class="cl">BookListView</span>.<span class="fn">as_view</span>(),   name<span class="op">=</span><span class="st">'book-list'</span>),
+    path(<span class="st">'&lt;int:pk&gt;/'</span>,         <span class="cl">BookDetailView</span>.<span class="fn">as_view</span>(), name<span class="op">=</span><span class="st">'book-detail'</span>),
+    path(<span class="st">'new/'</span>,              <span class="cl">BookCreateView</span>.<span class="fn">as_view</span>(), name<span class="op">=</span><span class="st">'book-create'</span>),
+    path(<span class="st">'&lt;int:pk&gt;/edit/'</span>,   <span class="cl">BookUpdateView</span>.<span class="fn">as_view</span>(), name<span class="op">=</span><span class="st">'book-update'</span>),
+    path(<span class="st">'&lt;int:pk&gt;/delete/'</span>, <span class="cl">BookDeleteView</span>.<span class="fn">as_view</span>(), name<span class="op">=</span><span class="st">'book-delete'</span>),
+]</code></pre>
+      </div>
+
+      <h2>Resolved URL Table</h2>
+      <table class="crud-table">
+        <thead>
+          <tr><th>Name</th><th>URL</th><th>Example</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><code class="ic">book-list</code></td><td><code>/books/</code></td><td><code>{% url 'book-list' %}</code></td></tr>
+          <tr><td><code class="ic">book-detail</code></td><td><code>/books/3/</code></td><td><code>{% url 'book-detail' book.pk %}</code></td></tr>
+          <tr><td><code class="ic">book-create</code></td><td><code>/books/new/</code></td><td><code>{% url 'book-create' %}</code></td></tr>
+          <tr><td><code class="ic">book-update</code></td><td><code>/books/3/edit/</code></td><td><code>{% url 'book-update' book.pk %}</code></td></tr>
+          <tr><td><code class="ic">book-delete</code></td><td><code>/books/3/delete/</code></td><td><code>{% url 'book-delete' book.pk %}</code></td></tr>
+        </tbody>
+      </table>
+
+      <h2>Adding Login Protection</h2>
+      <p>You can protect write operations with <code class="ic">LoginRequiredMixin</code> — always put mixins <strong>before</strong> the CBV in the inheritance chain:</p>
+      <div class="code-block">
+        <div class="code-header"><span class="code-filename">books/views.py</span><span class="code-lang lang-python">Python</span></div>
+        <pre><code><span class="kw">from</span> django.contrib.auth.mixins <span class="kw">import</span> LoginRequiredMixin
+
+<span class="kw">class</span> <span class="cl">BookCreateView</span>(<span class="cl">LoginRequiredMixin</span>, <span class="cl">CreateView</span>):
+    model  <span class="op">=</span> <span class="cl">Book</span>
+    fields <span class="op">=</span> [<span class="st">'title'</span>, <span class="st">'author'</span>, <span class="st">'pages'</span>, <span class="st">'pub_date'</span>]
+
+<span class="kw">class</span> <span class="cl">BookUpdateView</span>(<span class="cl">LoginRequiredMixin</span>, <span class="cl">UpdateView</span>):
+    model  <span class="op">=</span> <span class="cl">Book</span>
+    fields <span class="op">=</span> [<span class="st">'title'</span>, <span class="st">'author'</span>, <span class="st">'pages'</span>, <span class="st">'pub_date'</span>]
+
+<span class="kw">class</span> <span class="cl">BookDeleteView</span>(<span class="cl">LoginRequiredMixin</span>, <span class="cl">DeleteView</span>):
+    model       <span class="op">=</span> <span class="cl">Book</span>
+    success_url <span class="op">=</span> <span class="fn">reverse_lazy</span>(<span class="st">'book-list'</span>)</code></pre>
+      </div>
+    </section>
+
+    <!-- ════════════════════════════════ QUIZ ═══════════ -->
+    <section id="quiz" class="section">
+      <h1>Knowledge <em>Quiz</em></h1>
+      <p class="lead">Five questions to verify your understanding. Click an answer to reveal the explanation.</p>
+
+      <div class="quiz-q">
+        <div class="quiz-text">1. Which CBV automatically handles both the blank form (GET) and form submission (POST) for creating a new object?</div>
+        <div class="quiz-options">
+          <button class="quiz-opt" onclick="answer(this,'wrong','ListView only handles GET requests.')">ListView</button>
+          <button class="quiz-opt" onclick="answer(this,'correct','✓ CreateView handles GET (renders empty form) and POST (validates, saves, redirects) automatically.')">CreateView</button>
+          <button class="quiz-opt" onclick="answer(this,'wrong','DetailView only handles GET for displaying a single object.')">DetailView</button>
+          <button class="quiz-opt" onclick="answer(this,'wrong','TemplateView only renders a template — no form logic.')">TemplateView</button>
+        </div>
+        <div class="quiz-feedback"></div>
+      </div>
+
+      <div class="quiz-q">
+        <div class="quiz-text">2. Why must you use <code class="ic">reverse_lazy()</code> instead of <code class="ic">reverse()</code> for class-level attributes like <code class="ic">success_url</code>?</div>
+        <div class="quiz-options">
+          <button class="quiz-opt" onclick="answer(this,'wrong','reverse_lazy is not faster — it is lazily evaluated, not optimized for speed.')">It is faster</button>
+          <button class="quiz-opt" onclick="answer(this,'correct','✓ Class-level attributes are evaluated when the module loads, before URL patterns are fully registered. reverse_lazy defers the call until the URL conf is ready.')">URL conf not loaded yet when class is defined</button>
+          <button class="quiz-opt" onclick="answer(this,'wrong','Both functions can return strings; reverse_lazy returns a lazy string proxy.')">reverse() returns an integer</button>
+          <button class="quiz-opt" onclick="answer(this,'wrong','reverse_lazy is only required for DeleteView — this is a common misconception.')">Only DeleteView requires it</button>
+        </div>
+        <div class="quiz-feedback"></div>
+      </div>
+
+      <div class="quiz-q">
+        <div class="quiz-text">3. What is the default template name that <code class="ic">CreateView</code> and <code class="ic">UpdateView</code> look for when the model is <code class="ic">Book</code>?</div>
+        <div class="quiz-options">
+          <button class="quiz-opt" onclick="answer(this,'wrong','book_create.html and book_update.html are not the default names.')">books/book_create.html</button>
+          <button class="quiz-opt" onclick="answer(this,'correct','✓ Both CreateView and UpdateView default to &lt;app&gt;/&lt;model&gt;_form.html — they share one template, which you distinguish with {% if object %}.')">books/book_form.html</button>
+          <button class="quiz-opt" onclick="answer(this,'wrong','book_edit.html is not the default naming convention.')">books/book_edit.html</button>
+          <button class="quiz-opt" onclick="answer(this,'wrong','form.html is too generic and not the default.')">form.html</button>
+        </div>
+        <div class="quiz-feedback"></div>
+      </div>
+
+      <div class="quiz-q">
+        <div class="quiz-text">4. In a template, what tag generates a URL for a named route that takes a pk argument?</div>
+        <div class="quiz-options">
+          <button class="quiz-opt" onclick="answer(this,'wrong','{{ url }} is not a valid Django template tag for URL generation.')">{{ url 'book-detail' pk }}</button>
+          <button class="quiz-opt" onclick="answer(this,'wrong','{% link %} is not a built-in Django template tag.')">{% link 'book-detail' book.pk %}</button>
+          <button class="quiz-opt" onclick="answer(this,'correct','✓ {% url name args %} is the correct template tag. It performs a reverse URL lookup using the URL name and positional arguments.')">{% url 'book-detail' book.pk %}</button>
+          <button class="quiz-opt" onclick="answer(this,'wrong','{% reverse %} is not a standard Django template tag.')">{% reverse 'book-detail' book.pk %}</button>
+        </div>
+        <div class="quiz-feedback"></div>
+      </div>
+
+      <div class="quiz-q">
+        <div class="quiz-text">5. You want <code class="ic">BookCreateView</code> to redirect to the list page after saving, instead of calling <code class="ic">get_absolute_url()</code>. What's the cleanest way?</div>
+        <div class="quiz-options">
+          <button class="quiz-opt" onclick="answer(this,'wrong','Overriding get_absolute_url() changes the model\'s canonical URL for all purposes — a side-effect-heavy approach.')">Override get_absolute_url() on the model</button>
+          <button class="quiz-opt" onclick="answer(this,'correct','✓ Setting success_url = reverse_lazy(\"book-list\") on the view class overrides the redirect without touching the model.')">Set success_url = reverse_lazy('book-list') on the view</button>
+          <button class="quiz-opt" onclick="answer(this,'wrong','There is no redirect_url attribute on CBVs.')">Set redirect_url on the view</button>
+          <button class="quiz-opt" onclick="answer(this,'wrong','Overriding form_valid and calling HttpResponseRedirect works but is verbose — success_url is the clean way.')">Override form_valid to call HttpResponseRedirect manually</button>
+        </div>
+        <div class="quiz-feedback"></div>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<script src="scripts/index.js"></script>
+</body>
+</html>
