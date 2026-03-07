@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Learn Django</title>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;600;700&family=Fraunces:ital,wght@0,300;0,600;0,900;1,300;1,600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0d0f14;
+      --surface: #13161e;
+      --surface2: #1a1e2a;
+      --border: #252a38;
+      --accent: #4ade80;
+      --accent2: #38bdf8;
+      --text: #e2e8f0;
+      --muted: #64748b;
+      --heading: #f8fafc;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'JetBrains Mono', monospace;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+    }
+    h1 {
+      font-family: 'Fraunces', serif;
+      font-size: 2.5rem;
+      font-weight: 900;
+      color: var(--accent);
+      margin-bottom: 0.5rem;
+    }
+    p {
+      color: var(--muted);
+      margin-bottom: 2rem;
+      text-align: center;
+      max-width: 500px;
+      line-height: 1.7;
+    }
+    .modules {
+      display: grid;
+      gap: 1rem;
+      width: 100%;
+      max-width: 600px;
+    }
+    a.card {
+      display: block;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1.5rem 2rem;
+      text-decoration: none;
+      color: var(--text);
+      transition: all 0.2s;
+    }
+    a.card:hover {
+      border-color: var(--accent);
+      background: var(--surface2);
+      transform: translateY(-2px);
+    }
+    a.card .card-title {
+      font-weight: 700;
+      font-size: 1.1rem;
+      color: var(--heading);
+      margin-bottom: 0.3rem;
+    }
+    a.card .card-desc {
+      font-size: 0.8rem;
+      color: var(--muted);
+    }
+    .tag {
+      display: inline-block;
+      font-size: 0.6rem;
+      padding: 2px 8px;
+      border: 1px solid var(--accent);
+      color: var(--accent);
+      border-radius: 2px;
+      margin-bottom: 1.5rem;
+    }
+  </style>
+</head>
+<body>
+  <h1>Learn Django</h1>
+  <div class="tag">Django &amp; Python Rwanda BootCamp</div>
+  <p>Interactive learning documentation covering Django concepts, patterns, and best practices.</p>
+  <div class="modules">
+    <a class="card" href="CBV/django-crud-cbv.html">
+      <div class="card-title">CRUD with Class-Based Views</div>
+      <div class="card-desc">Models, Views, Templates, URLs — FBV vs CBV comparison, deep-dive, and quiz</div>
+    </a>
+  </div>
+</body>
+</html>
