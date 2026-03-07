@@ -101,6 +101,35 @@
 
       <p>CRUD is the backbone of almost every web application. Django gives you two paths to implement it: <strong>Function-Based Views (FBV)</strong> — explicit and readable — and <strong>Class-Based Views (CBV)</strong> — concise, reusable, and DRY.</p>
 
+      <h2>Understanding Views in Django</h2>
+      <p>In Django, a <strong>view</strong> is the layer that receives an HTTP request and returns an HTTP response. It's where your application logic lives — querying the database, processing form data, deciding what template to render. Django offers two distinct approaches to writing views:</p>
+
+      <h3>Function-Based Views (FBV)</h3>
+      <p>An FBV is a plain Python function that takes an <code class="ic">HttpRequest</code> as its first argument and returns an <code class="ic">HttpResponse</code>. You have <strong>complete, explicit control</strong> over every step: checking the HTTP method, instantiating forms, validating data, saving objects, and choosing what to render. This makes FBVs easy to understand — the entire flow is visible in one function — but it also means you rewrite the same patterns (method checking, form handling, error rendering) in every view.</p>
+
+      <h3>Class-Based Views (CBV)</h3>
+      <p>A CBV is a Python class that inherits from <code class="ic">django.views.View</code> (or one of Django's generic views like <code class="ic">ListView</code>, <code class="ic">CreateView</code>, etc.). Instead of a single function, the logic is split into <strong>methods that map to HTTP verbs</strong> — <code class="ic">get()</code>, <code class="ic">post()</code>, <code class="ic">put()</code>, etc. Django's generic CBVs go further: they encapsulate common patterns (listing objects, rendering forms, saving models) into reusable, configurable classes. You provide a few attributes (<code class="ic">model</code>, <code class="ic">fields</code>, <code class="ic">template_name</code>) and the CBV handles the rest.</p>
+
+      <h3>FBV vs CBV — At a Glance</h3>
+      <table class="crud-table">
+        <thead>
+          <tr><th>Aspect</th><th>FBV (Function-Based)</th><th>CBV (Class-Based)</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><strong>Structure</strong></td><td>A single function with <code class="ic">if/else</code> branches</td><td>A class with separate methods per HTTP verb</td></tr>
+          <tr><td><strong>Boilerplate</strong></td><td>High — you write form handling, method checks, save + redirect logic every time</td><td>Low — generic views handle all of this with a few attributes</td></tr>
+          <tr><td><strong>Reusability</strong></td><td>Limited — extracting shared logic requires decorators or helper functions</td><td>High — use inheritance and mixins to compose behaviour</td></tr>
+          <tr><td><strong>Readability</strong></td><td>Excellent for simple views — the entire flow is in one place</td><td>Excellent for standard patterns — but can feel "magic" until you understand the method chain</td></tr>
+          <tr><td><strong>Extensibility</strong></td><td>Use decorators (<code class="ic">@login_required</code>)</td><td>Use mixins (<code class="ic">LoginRequiredMixin</code>) — stackable and order-sensitive</td></tr>
+          <tr><td><strong>Learning curve</strong></td><td>Low — just Python functions</td><td>Moderate — requires understanding inheritance, MRO, and which methods to override</td></tr>
+        </tbody>
+      </table>
+
+      <div class="callout callout-key">
+        <strong>🔑 When to use which?</strong>
+        Use <strong>FBVs</strong> for one-off views with custom logic that doesn't fit a standard pattern (e.g., a dashboard aggregating multiple models, a webhook handler). Use <strong>CBVs</strong> for standard CRUD operations and any view that follows a repeatable pattern — they eliminate boilerplate and are easy to extend with mixins. When in doubt, start with a CBV; you can always override methods to customize behaviour.
+      </div>
+
       <div class="callout callout-info">
         <strong>📦 What we'll build</strong>
         A <code class="ic">Book</code> management app — list all books, view one book, create, edit, and delete. A classic CRUD app you can adapt to any model.
@@ -155,6 +184,17 @@
         <div class="flow-step flow-step-tpl">Template<span>render()</span></div>
         <div class="flow-arrow">→</div>
         <div class="flow-step">Browser<span>HTML Response</span></div>
+      </div>
+
+      <h2>How CBVs Work Under the Hood</h2>
+      <p>When you write <code class="ic">path('books/', BookListView.as_view())</code> in your URL configuration, here's what actually happens:</p>
+      <p><strong>1. <code class="ic">as_view()</code> is called at import time.</strong> It returns a plain function (a closure) that Django's URL dispatcher can call — because Django's routing expects a callable, not a class. This function creates a new instance of the CBV for every incoming request, ensuring views are stateless.</p>
+      <p><strong>2. <code class="ic">dispatch()</code> routes to the right method.</strong> When a request arrives, the closure calls <code class="ic">dispatch(request, *args, **kwargs)</code>. This method inspects <code class="ic">request.method</code> — if it's a GET, it calls <code class="ic">self.get()</code>; if it's a POST, it calls <code class="ic">self.post()</code>; and so on. If the HTTP method isn't supported, Django returns <code class="ic">405 Method Not Allowed</code> automatically.</p>
+      <p><strong>3. The method chain takes over.</strong> For a generic CBV like <code class="ic">CreateView</code>, the <code class="ic">get()</code> method renders an empty form, while the <code class="ic">post()</code> method validates the form, saves the object, and redirects. Each step is a separate method you can override — <code class="ic">get_queryset()</code>, <code class="ic">get_form()</code>, <code class="ic">form_valid()</code>, <code class="ic">get_context_data()</code> — giving you fine-grained control without rewriting entire views.</p>
+
+      <div class="callout callout-info">
+        <strong>ℹ️ The Inheritance Chain</strong>
+        Django's generic CBVs use deep inheritance. For example, <code class="ic">CreateView</code> inherits from <code class="ic">BaseCreateView</code> → <code class="ic">ModelFormMixin</code> → <code class="ic">FormMixin</code> → <code class="ic">ContextMixin</code> → <code class="ic">View</code>. Each layer adds specific capabilities (form handling, context injection, dispatch logic). You don't need to memorize this chain — just know that every attribute and method you set on your view overrides something in this chain.
       </div>
 
       <div class="callout callout-tip">
@@ -281,6 +321,10 @@ urlpatterns <span class="op">=</span> [
         Both code blocks below produce identical behaviour. The CBV version delegates boilerplate to Django's generic views.
       </div>
 
+      <p>When we say a CBV "delegates boilerplate," we mean something specific: all the repetitive logic you write in every FBV — checking <code class="ic">request.method</code>, creating a form instance, calling <code class="ic">is_valid()</code>, saving, redirecting on success, re-rendering on error — is already implemented in the generic CBV's method chain. Your job shifts from <strong>writing logic</strong> to <strong>configuring behaviour</strong> via class attributes and targeted method overrides.</p>
+
+      <p>What stays the same between FBV and CBV? The URL wiring (you still use <code class="ic">path()</code> in <code class="ic">urls.py</code>), the template rendering (same templates, same context variables), and the HTTP contract (same request in, same response out). What changes is the <em>structure</em>: procedural <code class="ic">if/else</code> becomes declarative configuration.</p>
+
       <h2>The List View (READ all)</h2>
       <div class="compare-toggle">
         <button class="compare-btn active" onclick="toggleCompare('list','fbv',this)">FBV — Function</button>
@@ -386,6 +430,7 @@ urlpatterns <span class="op">=</span> [
       </div>
 
       <h2 id="listview">ListView — Full Example</h2>
+      <p><code class="ic">ListView</code> inherits from <code class="ic">MultipleObjectMixin</code> and <code class="ic">BaseListView</code>. Its job is simple: fetch a queryset and pass it to a template. Key attributes include <code class="ic">model</code> (which model to query), <code class="ic">queryset</code> (a custom queryset to use instead), <code class="ic">template_name</code>, <code class="ic">context_object_name</code> (defaults to <code class="ic">object_list</code>), <code class="ic">paginate_by</code> (automatic pagination), and <code class="ic">ordering</code>. Override <code class="ic">get_queryset()</code> to add filtering or search — this is the most commonly overridden method on ListView.</p>
       <div class="code-block">
         <div class="code-header"><span class="code-filename">books/views.py</span><span class="code-lang lang-python">Python</span></div>
         <pre><code><span class="kw">from</span> django.views.generic <span class="kw">import</span> ListView
@@ -407,6 +452,7 @@ urlpatterns <span class="op">=</span> [
       </div>
 
       <h2 id="detailview">DetailView — Full Example</h2>
+      <p><code class="ic">DetailView</code> inherits from <code class="ic">SingleObjectMixin</code> and <code class="ic">BaseDetailView</code>. It fetches a single object by <code class="ic">pk</code> (or <code class="ic">slug</code> if configured) and passes it to the template as <code class="ic">object</code> (or a name derived from the model, e.g., <code class="ic">book</code>). If the object doesn't exist, Django automatically raises an <code class="ic">Http404</code> — no manual error handling needed. Override <code class="ic">get_context_data()</code> to inject extra information into the template, such as related objects or computed values.</p>
       <div class="code-block">
         <div class="code-header"><span class="code-filename">books/views.py</span><span class="code-lang lang-python">Python</span></div>
         <pre><code><span class="kw">from</span> django.views.generic <span class="kw">import</span> DetailView
@@ -426,6 +472,7 @@ urlpatterns <span class="op">=</span> [
       </div>
 
       <h2 id="createview">CreateView — Full Example</h2>
+      <p><code class="ic">CreateView</code> inherits from <code class="ic">ModelFormMixin</code> and <code class="ic">ProcessFormView</code>. On <strong>GET</strong>, it renders an empty <code class="ic">ModelForm</code>; on <strong>POST</strong>, it validates the submitted data, creates the object, and redirects. You must provide either <code class="ic">fields</code> (a list of field names) or <code class="ic">form_class</code> (a custom <code class="ic">ModelForm</code>) — never both. The most common override is <code class="ic">form_valid()</code>, where you can attach extra data before saving — for example, setting the object's owner to <code class="ic">self.request.user</code>.</p>
       <div class="code-block">
         <div class="code-header"><span class="code-filename">books/views.py</span><span class="code-lang lang-python">Python</span></div>
         <pre><code><span class="kw">from</span> django.views.generic.edit <span class="kw">import</span> CreateView
@@ -443,6 +490,7 @@ urlpatterns <span class="op">=</span> [
       </div>
 
       <h2 id="updateview">UpdateView — Full Example</h2>
+      <p><code class="ic">UpdateView</code> is nearly identical to <code class="ic">CreateView</code> — it shares the same parent classes and the same template (<code class="ic">book_form.html</code>) by default. The key difference: before rendering the form, it calls <code class="ic">get_object()</code> to fetch the existing instance by <code class="ic">pk</code>, then pre-populates the form fields with the current data. On successful POST, it saves the updated object and redirects to <code class="ic">get_absolute_url()</code> (or <code class="ic">success_url</code> if set). Because both Create and Update use the same template, the template can use <code class="ic">{% if object %}</code> to distinguish between "New" and "Edit" modes.</p>
       <div class="code-block">
         <div class="code-header"><span class="code-filename">books/views.py</span><span class="code-lang lang-python">Python</span></div>
         <pre><code><span class="kw">from</span> django.views.generic.edit <span class="kw">import</span> UpdateView
@@ -455,6 +503,7 @@ urlpatterns <span class="op">=</span> [
       </div>
 
       <h2 id="deleteview">DeleteView — Full Example</h2>
+      <p><code class="ic">DeleteView</code> works differently from the form-based views. On <strong>GET</strong>, it renders a confirmation page (<code class="ic">book_confirm_delete.html</code>) showing the object that's about to be removed. On <strong>POST</strong>, it deletes the object and redirects to <code class="ic">success_url</code>. Unlike Create and Update, you <strong>must set <code class="ic">success_url</code></strong> explicitly — once the object is deleted, there's no object left to call <code class="ic">get_absolute_url()</code> on. Use <code class="ic">reverse_lazy()</code> here because this is a class-level attribute evaluated at import time.</p>
       <div class="code-block">
         <div class="code-header"><span class="code-filename">books/views.py</span><span class="code-lang lang-python">Python</span></div>
         <pre><code><span class="kw">from</span> django.views.generic.edit <span class="kw">import</span> DeleteView
@@ -470,6 +519,29 @@ urlpatterns <span class="op">=</span> [
       <div class="callout callout-warn">
         <strong>⚠️ reverse_lazy vs reverse</strong>
         Use <code class="ic">reverse_lazy()</code> for class-level attributes like <code class="ic">success_url</code> because the URL conf isn't loaded yet when the class is defined. Use <code class="ic">reverse()</code> inside methods like <code class="ic">get_success_url()</code> instead.
+      </div>
+
+      <h2>Understanding Mixins</h2>
+      <p>One of the biggest advantages of CBVs over FBVs is the ability to compose behaviour using <strong>mixins</strong>. A mixin is a small, focused class that adds a specific capability — like requiring authentication or checking permissions — without modifying the view's core logic. You "mix in" behaviour by adding the mixin to the view's inheritance list.</p>
+
+      <p>Python uses <strong>Method Resolution Order (MRO)</strong> to decide which class's method runs first when multiple parent classes define the same method. The rule is simple: <strong>classes listed first take priority</strong>. This is why mixins must always come <em>before</em> the view class — if <code class="ic">LoginRequiredMixin</code> comes after <code class="ic">CreateView</code>, the <code class="ic">dispatch()</code> method from <code class="ic">CreateView</code> runs first, bypassing the authentication check entirely.</p>
+
+      <table class="crud-table">
+        <thead>
+          <tr><th>Mixin</th><th>What It Does</th><th>Key Attribute</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><code class="ic">LoginRequiredMixin</code></td><td>Redirects unauthenticated users to the login page</td><td><code class="ic">login_url</code></td></tr>
+          <tr><td><code class="ic">PermissionRequiredMixin</code></td><td>Checks that the user has specific permissions (returns 403 if not)</td><td><code class="ic">permission_required</code></td></tr>
+          <tr><td><code class="ic">UserPassesTestMixin</code></td><td>Runs a custom test function — e.g., only the object's owner can edit it</td><td><code class="ic">test_func()</code> method</td></tr>
+          <tr><td><code class="ic">FormMixin</code></td><td>Adds form handling to any view (used internally by CreateView, UpdateView)</td><td><code class="ic">form_class</code></td></tr>
+          <tr><td><code class="ic">ContextMixin</code></td><td>Provides <code class="ic">get_context_data()</code> for injecting extra template variables</td><td><code class="ic">extra_context</code></td></tr>
+        </tbody>
+      </table>
+
+      <div class="callout callout-key">
+        <strong>🔑 The Golden Rule</strong>
+        Always list mixins <strong>before</strong> the view class: <code class="ic">class MyView(LoginRequiredMixin, CreateView)</code>. If the mixin comes second, its <code class="ic">dispatch()</code> override is skipped and the protection doesn't work.
       </div>
 
       <h2>The Complete views.py</h2>
@@ -648,6 +720,11 @@ urlpatterns <span class="op">=</span> [
 <span class="kw">class</span> <span class="cl">BookDeleteView</span>(<span class="cl">LoginRequiredMixin</span>, <span class="cl">DeleteView</span>):
     model       <span class="op">=</span> <span class="cl">Book</span>
     success_url <span class="op">=</span> <span class="fn">reverse_lazy</span>(<span class="st">'book-list'</span>)</code></pre>
+      </div>
+
+      <div class="callout callout-tip">
+        <strong>💡 Why does mixin order matter?</strong>
+        Python reads the inheritance list left-to-right. Writing <code class="ic">class MyView(CreateView, LoginRequiredMixin)</code> means <code class="ic">CreateView.dispatch()</code> runs first — it processes the request normally, never checking authentication. Writing <code class="ic">class MyView(LoginRequiredMixin, CreateView)</code> means <code class="ic">LoginRequiredMixin.dispatch()</code> runs first — it checks if the user is logged in, and only then calls <code class="ic">super().dispatch()</code> which reaches <code class="ic">CreateView</code>. The same principle applies to <code class="ic">PermissionRequiredMixin</code>, <code class="ic">UserPassesTestMixin</code>, and any custom mixin you write.
       </div>
     </section>
 
