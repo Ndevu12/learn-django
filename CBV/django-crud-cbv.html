@@ -76,16 +76,16 @@
 
     <div class="sidebar-section">
       <div class="sidebar-label">Key Concepts</div>
-      <a class="sidebar-item" style="font-size:0.68rem">
+      <a class="sidebar-item sidebar-item-sm">
         <div class="sidebar-dot"></div>model = YourModel
       </a>
-      <a class="sidebar-item" style="font-size:0.68rem">
+      <a class="sidebar-item sidebar-item-sm">
         <div class="sidebar-dot"></div>fields = [...]
       </a>
-      <a class="sidebar-item" style="font-size:0.68rem">
+      <a class="sidebar-item sidebar-item-sm">
         <div class="sidebar-dot"></div>success_url
       </a>
-      <a class="sidebar-item" style="font-size:0.68rem">
+      <a class="sidebar-item sidebar-item-sm">
         <div class="sidebar-dot"></div>get_queryset()
       </a>
     </div>
@@ -148,11 +148,11 @@
       <div class="flow">
         <div class="flow-step">Browser<span>HTTP Request</span></div>
         <div class="flow-arrow">→</div>
-        <div class="flow-step" style="border-color:#38bdf8;color:#38bdf8">urls.py<span>Route match</span></div>
+        <div class="flow-step flow-step-urls">urls.py<span>Route match</span></div>
         <div class="flow-arrow">→</div>
-        <div class="flow-step" style="border-color:#4ade80;color:#4ade80">CBV<span>dispatch()</span></div>
+        <div class="flow-step flow-step-cbv">CBV<span>dispatch()</span></div>
         <div class="flow-arrow">→</div>
-        <div class="flow-step" style="border-color:#fb923c;color:#fb923c">Template<span>render()</span></div>
+        <div class="flow-step flow-step-tpl">Template<span>render()</span></div>
         <div class="flow-arrow">→</div>
         <div class="flow-step">Browser<span>HTML Response</span></div>
       </div>
@@ -704,7 +704,7 @@ urlpatterns <span class="op">=</span> [
         <div class="quiz-text">5. You want <code class="ic">BookCreateView</code> to redirect to the list page after saving, instead of calling <code class="ic">get_absolute_url()</code>. What's the cleanest way?</div>
         <div class="quiz-options">
           <button class="quiz-opt" onclick="answer(this,'wrong','Overriding get_absolute_url() changes the model\'s canonical URL for all purposes — a side-effect-heavy approach.')">Override get_absolute_url() on the model</button>
-          <button class="quiz-opt" onclick="answer(this,'correct','✓ Setting success_url = reverse_lazy(\"book-list\") on the view class overrides the redirect without touching the model.')">Set success_url = reverse_lazy('book-list') on the view</button>
+          <button class="quiz-opt" onclick="answer(this,'correct','✓ Setting success_url = reverse_lazy(&quot;book-list&quot;) on the view class overrides the redirect without touching the model.')">Set success_url = reverse_lazy('book-list') on the view</button>
           <button class="quiz-opt" onclick="answer(this,'wrong','There is no redirect_url attribute on CBVs.')">Set redirect_url on the view</button>
           <button class="quiz-opt" onclick="answer(this,'wrong','Overriding form_valid and calling HttpResponseRedirect works but is verbose — success_url is the clean way.')">Override form_valid to call HttpResponseRedirect manually</button>
         </div>

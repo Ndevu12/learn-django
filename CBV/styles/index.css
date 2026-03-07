@@ -127,6 +127,7 @@ aside {
   flex-shrink: 0;
 }
 .sidebar-item.active .sidebar-dot { background: var(--accent); }
+.sidebar-item-sm { font-size: 0.68rem; }
 
 /* ── Main Content ── */
 main {
@@ -358,6 +359,9 @@ code {
   color: var(--muted);
   margin-top: 2px;
 }
+.flow-step-urls  { border-color: #38bdf8; color: #38bdf8; }
+.flow-step-cbv   { border-color: #4ade80; color: #4ade80; }
+.flow-step-tpl   { border-color: #fb923c; color: #fb923c; }
 .flow-arrow {
   color: var(--muted);
   padding: 0 0.5rem;
