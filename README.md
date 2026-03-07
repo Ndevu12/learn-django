@@ -172,4 +172,4 @@ This project is licensed under the MIT License — see the [LICENSE](LICENSE) fi
 
 ---
 
-Made with ❤️ for the **Django & Python Rwanda BootCamp** by [Ndevu](https://github.com/Ndevu12)
+Made for the **Django & Python Rwanda BootCamp 2026** by [Ndevu](https://github.com/Ndevu12)
