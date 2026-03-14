@@ -1,0 +1,78 @@
+/* ═══════════════════════════════════════════════════════
+   LANDING PAGE — Learn Django
+   Page-specific styles (tokens.css provides variables)
+   ═══════════════════════════════════════════════════════ */
+
+body {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+.landing {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+}
+.landing h1 {
+  font-family: 'Fraunces', serif;
+  font-size: 2.5rem;
+  font-weight: 900;
+  color: var(--accent);
+  margin-bottom: 0.5rem;
+  text-align: center;
+}
+.landing p {
+  color: var(--muted);
+  margin-bottom: 2rem;
+  text-align: center;
+  max-width: 500px;
+  line-height: 1.7;
+}
+.modules {
+  display: grid;
+  gap: 1rem;
+  width: 100%;
+  max-width: 600px;
+}
+a.card {
+  display: block;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 1.5rem 2rem;
+  text-decoration: none;
+  color: var(--text);
+  transition: all 0.2s;
+}
+a.card:hover {
+  border-color: var(--accent);
+  background: var(--surface2);
+  transform: translateY(-2px);
+}
+a.card .card-title {
+  font-weight: 700;
+  font-size: 1.1rem;
+  color: var(--heading);
+  margin-bottom: 0.3rem;
+}
+a.card .card-desc {
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+.tag {
+  display: inline-block;
+  font-size: 0.6rem;
+  padding: 2px 8px;
+  border: 1px solid var(--accent);
+  color: var(--accent);
+  border-radius: 2px;
+  margin-bottom: 1.5rem;
+}
+a.my-link {
+  color: var(--accent2);
+  text-decoration: none;
+  margin-left: 0.5rem;
+}

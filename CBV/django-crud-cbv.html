@@ -4,28 +4,29 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Django CRUD in Action</title>
-<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;600;700&family=Fraunces:ital,wght@0,300;0,600;0,900;1,300;1,600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../styles/tokens.css">
+<link rel="stylesheet" href="../styles/components.css">
+<link rel="stylesheet" href="../styles/responsive.css">
 <link rel="stylesheet" href="styles/index.css">
 </head>
 <body>
 
-<header>
-  <button class="menu-toggle" onclick="toggleSidebar()" aria-label="Toggle sidebar">
-    <span></span><span></span><span></span>
-  </button>
-  <div class="logo">Django</div>
-  <div class="header-tag">CRUD in Action</div>
-  <nav>
-    <button class="active" onclick="showSection('overview',this)">Overview</button>
-    <button onclick="showSection('setup',this)">Setup</button>
-    <button onclick="showSection('fbv',this)">FBV → CBV</button>
-    <button onclick="showSection('cbv',this)">CBV Deep-Dive</button>
-    <button onclick="showSection('templates',this)">Templates</button>
-    <button onclick="showSection('urls',this)">URLs</button>
-    <button onclick="showSection('quiz',this)">Quiz</button>
-  </nav>
-</header>
-<div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+<script>
+window.__PAGE = {
+  tag:      'CRUD in Action',
+  homeLink: '../index.html',
+  nav: [
+    { id: 'overview',  label: 'Overview' },
+    { id: 'setup',     label: 'Setup' },
+    { id: 'fbv',       label: 'FBV → CBV' },
+    { id: 'cbv',       label: 'CBV Deep-Dive' },
+    { id: 'templates', label: 'Templates' },
+    { id: 'urls',      label: 'URLs' },
+    { id: 'quiz',      label: 'Quiz' }
+  ]
+};
+</script>
+<script src="../scripts/header.js"></script>
 
 <div class="layout">
   <!-- ── Sidebar ── -->
@@ -57,19 +58,19 @@
 
     <div class="sidebar-section">
       <div class="sidebar-label">CBV Reference</div>
-      <a class="sidebar-item" onclick="showSection('cbv',null,this);scrollTo('listview')">
+      <a class="sidebar-item" onclick="showSection('cbv',null,this);scrollToId('listview')">
         <div class="sidebar-dot"></div>ListView
       </a>
-      <a class="sidebar-item" onclick="showSection('cbv',null,this);scrollTo('detailview')">
+      <a class="sidebar-item" onclick="showSection('cbv',null,this);scrollToId('detailview')">
         <div class="sidebar-dot"></div>DetailView
       </a>
-      <a class="sidebar-item" onclick="showSection('cbv',null,this);scrollTo('createview')">
+      <a class="sidebar-item" onclick="showSection('cbv',null,this);scrollToId('createview')">
         <div class="sidebar-dot"></div>CreateView
       </a>
-      <a class="sidebar-item" onclick="showSection('cbv',null,this);scrollTo('updateview')">
+      <a class="sidebar-item" onclick="showSection('cbv',null,this);scrollToId('updateview')">
         <div class="sidebar-dot"></div>UpdateView
       </a>
-      <a class="sidebar-item" onclick="showSection('cbv',null,this);scrollTo('deleteview')">
+      <a class="sidebar-item" onclick="showSection('cbv',null,this);scrollToId('deleteview')">
         <div class="sidebar-dot"></div>DeleteView
       </a>
     </div>
@@ -792,6 +793,5 @@ urlpatterns <span class="op">=</span> [
   </main>
 </div>
 
-<script src="scripts/index.js"></script>
 </body>
 </html>
