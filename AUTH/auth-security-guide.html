@@ -1,0 +1,722 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Auth & Security — JWT · RBAC · Protected Endpoints</title>
+<link rel="stylesheet" href="../styles/tokens.css">
+<link rel="stylesheet" href="../styles/components.css">
+<link rel="stylesheet" href="../styles/responsive.css">
+<link rel="stylesheet" href="styles/index.css">
+</head>
+<body>
+
+<script>
+window.__PAGE = {
+  tag:      'SECURITY MODULE',
+  homeLink: '../index.html',
+  nav: [
+    { id: 'overview',  label: 'Overview' },
+    { id: 'jwt',       label: 'JWT' },
+    { id: 'djangojwt', label: 'Django + JWT' },
+    { id: 'rbac',      label: 'RBAC' },
+    { id: 'endpoints', label: 'Endpoints' },
+    { id: 'threats',   label: 'Threats' },
+    { id: 'quiz',      label: 'Quiz' }
+  ]
+};
+</script>
+<script src="../scripts/header.js"></script>
+
+<div class="layout">
+
+<!-- ════ SIDEBAR ════ -->
+<aside>
+  <div class="sidebar-section">
+    <div class="sidebar-label">Modules</div>
+    <div class="sidebar-item active" onclick="showSection('overview',null,this)"><span class="sidebar-dot">◈</span>Overview</div>
+    <div class="sidebar-item" onclick="showSection('jwt',null,this)"><span class="sidebar-dot">◈</span>How JWT Works</div>
+    <div class="sidebar-item" onclick="showSection('djangojwt',null,this)"><span class="sidebar-dot">◈</span>Django + JWT Setup</div>
+    <div class="sidebar-item" onclick="showSection('rbac',null,this)"><span class="sidebar-dot">◈</span>Role-Based Access</div>
+    <div class="sidebar-item" onclick="showSection('endpoints',null,this)"><span class="sidebar-dot">◈</span>Protecting Endpoints</div>
+    <div class="sidebar-item" onclick="showSection('threats',null,this)"><span class="sidebar-dot">◈</span>Common Threats</div>
+    <div class="sidebar-item" onclick="showSection('quiz',null,this)"><span class="sidebar-dot">◈</span>Knowledge Quiz</div>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-label">JWT Anatomy</div>
+    <div class="sidebar-item" onclick="showSection('jwt',null,this)"><span class="sidebar-dot" style="color:#f87171">H</span>Header</div>
+    <div class="sidebar-item" onclick="showSection('jwt',null,this)"><span class="sidebar-dot" style="color:#c084fc">P</span>Payload / Claims</div>
+    <div class="sidebar-item" onclick="showSection('jwt',null,this)"><span class="sidebar-dot" style="color:#34d399">S</span>Signature</div>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-label">RBAC Roles</div>
+    <div class="sidebar-item" style="font-size:0.72rem"><span class="sidebar-dot">👑</span>Admin</div>
+    <div class="sidebar-item" style="font-size:0.72rem"><span class="sidebar-dot">📝</span>Editor</div>
+    <div class="sidebar-item" style="font-size:0.72rem"><span class="sidebar-dot">👁</span>Viewer</div>
+    <div class="sidebar-item" style="font-size:0.72rem"><span class="sidebar-dot">🚫</span>Anonymous</div>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-label">Key Decorators</div>
+    <div class="sidebar-item" style="font-size:0.7rem"><span class="sidebar-dot">🔒</span>@permission_classes</div>
+    <div class="sidebar-item" style="font-size:0.7rem"><span class="sidebar-dot">🔑</span>IsAuthenticated</div>
+    <div class="sidebar-item" style="font-size:0.7rem"><span class="sidebar-dot">⚡</span>IsAdminUser</div>
+    <div class="sidebar-item" style="font-size:0.7rem"><span class="sidebar-dot">✍</span>Custom Permission</div>
+  </div>
+</aside>
+
+<!-- ════ MAIN ════ -->
+<main>
+
+<!-- ══════════════════════════ OVERVIEW ══════════════════════════ -->
+<section id="overview" class="section active">
+  <h1>Auth &amp; <em>Security</em></h1>
+  <p class="lead">Implementing JWT authentication, Role-Based Access Control, and hardening your API endpoints against real-world attacks.</p>
+
+  <p>Modern APIs need more than a username and password check. You need <strong>stateless authentication</strong> that scales, <strong>fine-grained permissions</strong> based on who the user is, and <strong>hardened endpoints</strong> that resist common attack vectors.</p>
+
+  <div class="callout callout-info">
+    <strong>🧭 What we'll cover</strong>
+    This guide uses <strong>Django REST Framework (DRF)</strong> with <strong>djangorestframework-simplejwt</strong>. The concepts — JWT anatomy, RBAC patterns, token rotation, and threat mitigation — apply to any framework.
+  </div>
+
+  <h2>The Three Pillars</h2>
+  <table class="crud-table">
+    <thead><tr><th>Pillar</th><th>What it answers</th><th>Implementation</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Authentication</strong></td><td>"Who are you?"</td><td>JWT — signed token proves identity</td></tr>
+      <tr><td><strong>Authorization</strong></td><td>"What can you do?"</td><td>RBAC — roles map to allowed actions</td></tr>
+      <tr><td><strong>Protection</strong></td><td>"Are you safe?"</td><td>Throttling, HTTPS, CSRF, validation</td></tr>
+    </tbody>
+  </table>
+
+  <h2>Authentication Flow</h2>
+  <div class="flow">
+    <div class="flow-step"><div class="flow-icon">🖥</div><div class="flow-title">Client</div><div class="flow-sub">POST /login</div></div>
+    <div class="flow-arrow-col"><div class="flow-arrow">→</div><div class="flow-arrow-label">credentials</div></div>
+    <div class="flow-step" style="border-color:#c0392b"><div class="flow-icon">🔐</div><div class="flow-title">Auth View</div><div class="flow-sub">verify user</div></div>
+    <div class="flow-arrow-col"><div class="flow-arrow">→</div><div class="flow-arrow-label">sign token</div></div>
+    <div class="flow-step" style="border-color:#7c3aed"><div class="flow-icon">🎟</div><div class="flow-title">JWT Pair</div><div class="flow-sub">access + refresh</div></div>
+    <div class="flow-arrow-col"><div class="flow-arrow">→</div><div class="flow-arrow-label">stored client</div></div>
+    <div class="flow-step"><div class="flow-icon">🖥</div><div class="flow-title">Client</div><div class="flow-sub">Bearer token</div></div>
+    <div class="flow-arrow-col"><div class="flow-arrow">→</div><div class="flow-arrow-label">Authorization</div></div>
+    <div class="flow-step" style="border-color:#059669"><div class="flow-icon">✅</div><div class="flow-title">API</div><div class="flow-sub">verifies &amp; responds</div></div>
+  </div>
+
+  <h2>Session vs JWT — Quick Comparison</h2>
+  <table class="crud-table">
+    <thead><tr><th>Aspect</th><th>Session-based</th><th>JWT</th></tr></thead>
+    <tbody>
+      <tr><td><strong>State</strong></td><td>Stateful (server stores session)</td><td>Stateless (server stores nothing)</td></tr>
+      <tr><td><strong>Storage</strong></td><td>Server DB / cache</td><td>Client (localStorage / cookie)</td></tr>
+      <tr><td><strong>Scaling</strong></td><td>Needs shared session store</td><td>Works across multiple servers</td></tr>
+      <tr><td><strong>Revocation</strong></td><td>Easy — delete session row</td><td>Hard — must use a denylist</td></tr>
+      <tr><td><strong>Payload</strong></td><td>Only a session ID</td><td>Can carry claims (role, email…)</td></tr>
+      <tr><td><strong>Best for</strong></td><td>Traditional web apps (Django views)</td><td>REST APIs, SPAs, mobile apps</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- ══════════════════════════ JWT ══════════════════════════ -->
+<section id="jwt" class="section">
+  <h1>How <em>JWT</em> Works</h1>
+  <p class="lead">A JSON Web Token is a compact, self-contained string that proves a claim — without querying a database on every request.</p>
+
+  <h2>Anatomy of a Token</h2>
+  <div class="jwt-visual">
+    <div class="jwt-part jwt-part-header">
+      <div class="jwt-part-label">Part 1</div>
+      <div class="jwt-part-name">Header</div>
+      <div class="jwt-part-desc">Algorithm &amp; token type.<br>Base64Url encoded.</div>
+    </div>
+    <div class="jwt-dot">.</div>
+    <div class="jwt-part jwt-part-payload">
+      <div class="jwt-part-label">Part 2</div>
+      <div class="jwt-part-name">Payload</div>
+      <div class="jwt-part-desc">Claims: user_id, role, exp, iat…<br>Base64Url encoded.</div>
+    </div>
+    <div class="jwt-dot">.</div>
+    <div class="jwt-part jwt-part-sig">
+      <div class="jwt-part-label">Part 3</div>
+      <div class="jwt-part-name">Signature</div>
+      <div class="jwt-part-desc">HMAC-SHA256 of header + payload using SECRET_KEY.</div>
+    </div>
+  </div>
+
+  <h3>What a real JWT looks like</h3>
+  <div class="token-str">
+    <span class="tok-h">eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9</span><span class="tok-dot">.</span><span class="tok-p">eyJ1c2VyX2lkIjo0Miwicm9sZSI6ImVkaXRvciIsImV4cCI6MTcwMDAwMDAwMH0</span><span class="tok-dot">.</span><span class="tok-s">Xv9Z4kQmK2jLpR8T1nWfOqMdYeI3HsBuCvAzE6oP</span>
+  </div>
+  <p style="font-size:0.75rem;color:var(--muted);margin-top:0.2rem">
+    <span style="color:#f87171">■</span> Header &nbsp;·&nbsp;
+    <span style="color:#c084fc">■</span> Payload &nbsp;·&nbsp;
+    <span style="color:#34d399">■</span> Signature
+  </p>
+
+  <h3>Decoded Payload Example</h3>
+  <div class="code-block">
+    <div class="code-header"><span class="code-filename">payload (decoded)</span><span class="code-lang lang-js">JSON</span></div>
+    <pre><code>{
+  <span class="st">"user_id"</span><span class="op">:</span>  <span class="nu">42</span>,
+  <span class="st">"username"</span><span class="op">:</span> <span class="st">"alice"</span>,
+  <span class="st">"role"</span><span class="op">:</span>     <span class="st">"editor"</span>,
+  <span class="st">"iat"</span><span class="op">:</span>      <span class="nu">1700000000</span>,    <span class="cm">// issued at (Unix timestamp)</span>
+  <span class="st">"exp"</span><span class="op">:</span>      <span class="nu">1700003600</span>     <span class="cm">// expires in 1 hour</span>
+}</code></pre>
+  </div>
+
+  <div class="callout callout-danger">
+    <strong>⚠️ The Payload is NOT encrypted</strong>
+    Anyone can base64-decode the payload. Never store passwords, card numbers, or truly sensitive data in a JWT. The signature only proves the token was issued by your server — it doesn't hide the contents.
+  </div>
+
+  <h2>Access Token vs Refresh Token</h2>
+  <table class="crud-table">
+    <thead><tr><th>Property</th><th>Access Token</th><th>Refresh Token</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Lifetime</strong></td><td>Short — 5 to 60 minutes</td><td>Long — 7 to 30 days</td></tr>
+      <tr><td><strong>Sent to API</strong></td><td>Yes — every request</td><td>No — only to /token/refresh</td></tr>
+      <tr><td><strong>If stolen</strong></td><td>Attacker has minutes</td><td>Attacker can get new access tokens</td></tr>
+      <tr><td><strong>Storage</strong></td><td>Memory (SPA) or HttpOnly cookie</td><td>HttpOnly cookie (recommended)</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Token Refresh Flow</h3>
+  <div class="code-block">
+    <div class="code-header"><span class="code-filename">HTTP exchange</span><span class="code-lang lang-txt">REST</span></div>
+    <pre><code><span class="cm"># 1. Client sends expired access token → 401</span>
+GET /api/posts/ HTTP/1.1
+Authorization: Bearer &lt;expired-access-token&gt;
+
+<span class="cm"># 2. Client refreshes using the long-lived refresh token</span>
+POST /api/token/refresh/
+{ <span class="st">"refresh"</span>: <span class="st">"&lt;refresh-token&gt;"</span> }
+
+<span class="cm"># 3. Server responds with a new access token</span>
+{ <span class="st">"access"</span>: <span class="st">"&lt;new-access-token&gt;"</span> }
+
+<span class="cm"># 4. Client retries with new access token → 200</span>
+GET /api/posts/
+Authorization: Bearer &lt;new-access-token&gt;</code></pre>
+  </div>
+
+  <div class="callout callout-tip">
+    <strong>💡 Token Rotation</strong>
+    Enable <code class="ic">ROTATE_REFRESH_TOKENS = True</code> in Simple JWT. Every refresh call issues a new refresh token and blacklists the old one — an attacker cannot reuse a stolen refresh token after it has been rotated.
+  </div>
+</section>
+
+<!-- ══════════════════════════ DJANGO + JWT ══════════════════════════ -->
+<section id="djangojwt" class="section">
+  <h1>Django <em>+ JWT</em></h1>
+  <p class="lead">Setting up djangorestframework-simplejwt from zero to protected endpoints in six steps.</p>
+
+  <h2>Installation &amp; Configuration</h2>
+  <div class="steps">
+    <div class="step">
+      <div class="step-num">1</div>
+      <div class="step-body">
+        <div class="step-title">Install the packages</div>
+        <div class="code-block"><div class="code-header"><span class="code-filename">terminal</span><span class="code-lang lang-bash">bash</span></div>
+<pre><code>pip install djangorestframework djangorestframework-simplejwt</code></pre></div>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">2</div>
+      <div class="step-body">
+        <div class="step-title">Configure settings.py</div>
+        <div class="code-block"><div class="code-header"><span class="code-filename">settings.py</span><span class="code-lang lang-python">Python</span></div>
+<pre><code>INSTALLED_APPS <span class="op">=</span> [
+    ...
+    <span class="st">'rest_framework'</span>,
+    <span class="st">'rest_framework_simplejwt'</span>,
+    <span class="st">'rest_framework_simplejwt.token_blacklist'</span>,  <span class="cm"># for revocation</span>
+]
+
+REST_FRAMEWORK <span class="op">=</span> {
+    <span class="st">'DEFAULT_AUTHENTICATION_CLASSES'</span>: [
+        <span class="st">'rest_framework_simplejwt.authentication.JWTAuthentication'</span>,
+    ],
+    <span class="st">'DEFAULT_PERMISSION_CLASSES'</span>: [
+        <span class="st">'rest_framework.permissions.IsAuthenticated'</span>,  <span class="cm"># global default</span>
+    ],
+}</code></pre></div>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">3</div>
+      <div class="step-body">
+        <div class="step-title">Tune token lifetimes in settings.py</div>
+        <div class="code-block"><div class="code-header"><span class="code-filename">settings.py</span><span class="code-lang lang-python">Python</span></div>
+<pre><code><span class="kw">from</span> datetime <span class="kw">import</span> timedelta
+
+SIMPLE_JWT <span class="op">=</span> {
+    <span class="st">'ACCESS_TOKEN_LIFETIME'</span>:  timedelta(minutes<span class="op">=</span><span class="nu">15</span>),
+    <span class="st">'REFRESH_TOKEN_LIFETIME'</span>: timedelta(days<span class="op">=</span><span class="nu">7</span>),
+    <span class="st">'ROTATE_REFRESH_TOKENS'</span>:  <span class="kw">True</span>,
+    <span class="st">'BLACKLIST_AFTER_ROTATION'</span>: <span class="kw">True</span>,
+    <span class="st">'ALGORITHM'</span>:              <span class="st">'HS256'</span>,
+    <span class="st">'SIGNING_KEY'</span>:            SECRET_KEY,
+    <span class="st">'AUTH_HEADER_TYPES'</span>:       (<span class="st">'Bearer'</span>,),
+}</code></pre></div>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">4</div>
+      <div class="step-body">
+        <div class="step-title">Wire up auth URLs</div>
+        <div class="code-block"><div class="code-header"><span class="code-filename">urls.py</span><span class="code-lang lang-python">Python</span></div>
+<pre><code><span class="kw">from</span> rest_framework_simplejwt.views <span class="kw">import</span> (
+    <span class="cl">TokenObtainPairView</span>,
+    <span class="cl">TokenRefreshView</span>,
+    <span class="cl">TokenBlacklistView</span>,
+)
+
+urlpatterns <span class="op">=</span> [
+    path(<span class="st">'api/token/'</span>,          <span class="cl">TokenObtainPairView</span>.<span class="fn">as_view</span>()),
+    path(<span class="st">'api/token/refresh/'</span>,   <span class="cl">TokenRefreshView</span>.<span class="fn">as_view</span>()),
+    path(<span class="st">'api/token/blacklist/'</span>,  <span class="cl">TokenBlacklistView</span>.<span class="fn">as_view</span>()),  <span class="cm"># logout</span>
+]</code></pre></div>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">5</div>
+      <div class="step-body">
+        <div class="step-title">Run migrations for the blacklist table</div>
+        <div class="code-block"><div class="code-header"><span class="code-filename">terminal</span><span class="code-lang lang-bash">bash</span></div>
+<pre><code>python manage.py migrate</code></pre></div>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">6</div>
+      <div class="step-body">
+        <div class="step-title">Embed extra claims in the token (optional but powerful)</div>
+        <div class="code-block"><div class="code-header"><span class="code-filename">views.py — custom token serializer</span><span class="code-lang lang-python">Python</span></div>
+<pre><code><span class="kw">from</span> rest_framework_simplejwt.serializers <span class="kw">import</span> <span class="cl">TokenObtainPairSerializer</span>
+<span class="kw">from</span> rest_framework_simplejwt.views      <span class="kw">import</span> <span class="cl">TokenObtainPairView</span>
+
+<span class="kw">class</span> <span class="cl">MyTokenSerializer</span>(<span class="cl">TokenObtainPairSerializer</span>):
+    <span class="op">@</span><span class="fn">classmethod</span>
+    <span class="kw">def</span> <span class="fn">get_token</span>(cls, user):
+        token <span class="op">=</span> <span class="kw">super</span>().<span class="fn">get_token</span>(user)
+        <span class="cm"># ↓ custom claims written into the payload</span>
+        token[<span class="st">'username'</span>] <span class="op">=</span> user.username
+        token[<span class="st">'role'</span>]     <span class="op">=</span> user.profile.role  <span class="cm"># your custom field</span>
+        <span class="kw">return</span> token
+
+<span class="kw">class</span> <span class="cl">MyTokenView</span>(<span class="cl">TokenObtainPairView</span>):
+    serializer_class <span class="op">=</span> <span class="cl">MyTokenSerializer</span>
+</code></pre></div>
+      </div>
+    </div>
+  </div>
+
+  <h2>Testing the Token Endpoint</h2>
+  <div class="code-block">
+    <div class="code-header"><span class="code-filename">HTTP exchange</span><span class="code-lang lang-bash">bash</span></div>
+    <pre><code><span class="cm"># 1. Obtain token pair</span>
+curl -X POST http://localhost:8000/api/token/ \
+  -H <span class="st">"Content-Type: application/json"</span> \
+  -d <span class="st">'{"username":"alice","password":"secret"}'</span>
+
+<span class="cm"># Response:</span>
+{
+  <span class="st">"access"</span>:  <span class="st">"eyJ..."</span>,   <span class="cm">// valid 15 min</span>
+  <span class="st">"refresh"</span>: <span class="st">"eyJ..."</span>    <span class="cm">// valid 7 days</span>
+}
+
+<span class="cm"># 2. Call a protected endpoint</span>
+curl http://localhost:8000/api/posts/ \
+  -H <span class="st">"Authorization: Bearer eyJ..."</span></code></pre>
+  </div>
+</section>
+
+<!-- ══════════════════════════ RBAC ══════════════════════════ -->
+<section id="rbac" class="section">
+  <h1>Role-Based <em>Access</em></h1>
+  <p class="lead">RBAC grants permissions to roles, not to individual users — assign a user to a role and they inherit exactly the right access level.</p>
+
+  <h2>Designing Roles</h2>
+  <div class="rbac-grid">
+    <div class="rbac-card">
+      <div class="rbac-role" style="color:#c0392b">👑 Admin</div>
+      <div class="rbac-perm">Create any resource</div>
+      <div class="rbac-perm">Edit any resource</div>
+      <div class="rbac-perm">Delete any resource</div>
+      <div class="rbac-perm">Manage users</div>
+      <div class="rbac-perm">View audit logs</div>
+    </div>
+    <div class="rbac-card">
+      <div class="rbac-role" style="color:#d97706">📝 Editor</div>
+      <div class="rbac-perm">Create own resources</div>
+      <div class="rbac-perm">Edit own resources</div>
+      <div class="rbac-perm rbac-deny">Delete others' resources</div>
+      <div class="rbac-perm rbac-deny">Manage users</div>
+      <div class="rbac-perm rbac-deny">View audit logs</div>
+    </div>
+    <div class="rbac-card">
+      <div class="rbac-role" style="color:#0d6e6e">👁 Viewer</div>
+      <div class="rbac-perm rbac-deny">Create resources</div>
+      <div class="rbac-perm rbac-deny">Edit resources</div>
+      <div class="rbac-perm rbac-deny">Delete resources</div>
+      <div class="rbac-perm">Read all resources</div>
+      <div class="rbac-perm rbac-deny">Manage users</div>
+    </div>
+    <div class="rbac-card">
+      <div class="rbac-role" style="color:#6b7280">🚫 Anonymous</div>
+      <div class="rbac-perm rbac-deny">Create resources</div>
+      <div class="rbac-perm rbac-deny">Edit resources</div>
+      <div class="rbac-perm rbac-deny">Delete resources</div>
+      <div class="rbac-perm">Read public endpoints</div>
+      <div class="rbac-perm rbac-deny">Access private data</div>
+    </div>
+  </div>
+
+  <h2>Permission Matrix</h2>
+  <table class="matrix">
+    <thead>
+      <tr><th>Endpoint</th><th>Anonymous</th><th>Viewer</th><th>Editor</th><th>Admin</th></tr>
+    </thead>
+    <tbody>
+      <tr><td class="row-head">GET /api/posts/</td><td class="m-y">✓</td><td class="m-y">✓</td><td class="m-y">✓</td><td class="m-y">✓</td></tr>
+      <tr><td class="row-head">GET /api/posts/:id/</td><td class="m-y">✓</td><td class="m-y">✓</td><td class="m-y">✓</td><td class="m-y">✓</td></tr>
+      <tr><td class="row-head">POST /api/posts/</td><td class="m-n">✗</td><td class="m-n">✗</td><td class="m-y">✓</td><td class="m-y">✓</td></tr>
+      <tr><td class="row-head">PUT /api/posts/:id/</td><td class="m-n">✗</td><td class="m-n">✗</td><td class="m-c">own</td><td class="m-y">✓</td></tr>
+      <tr><td class="row-head">DELETE /api/posts/:id/</td><td class="m-n">✗</td><td class="m-n">✗</td><td class="m-n">✗</td><td class="m-y">✓</td></tr>
+      <tr><td class="row-head">GET /api/admin/users/</td><td class="m-n">✗</td><td class="m-n">✗</td><td class="m-n">✗</td><td class="m-y">✓</td></tr>
+    </tbody>
+  </table>
+  <p style="font-size:0.72rem;color:var(--muted)">✓ allowed &nbsp;·&nbsp; ✗ denied &nbsp;·&nbsp; <span style="color:var(--amber);font-weight:600">own</span> = only their own objects</p>
+
+  <h2>Implementing RBAC in DRF</h2>
+  <h3>1 — Add role to the User model</h3>
+  <div class="code-block">
+    <div class="code-header"><span class="code-filename">models.py</span><span class="code-lang lang-python">Python</span></div>
+    <pre><code><span class="kw">from</span> django.contrib.auth.models <span class="kw">import</span> AbstractUser
+<span class="kw">from</span> django.db <span class="kw">import</span> models
+
+<span class="kw">class</span> <span class="cl">User</span>(<span class="cl">AbstractUser</span>):
+    <span class="kw">class</span> <span class="cl">Role</span>(models.<span class="cl">TextChoices</span>):
+        ADMIN  <span class="op">=</span> <span class="st">'admin'</span>,  <span class="st">'Admin'</span>
+        EDITOR <span class="op">=</span> <span class="st">'editor'</span>, <span class="st">'Editor'</span>
+        VIEWER <span class="op">=</span> <span class="st">'viewer'</span>, <span class="st">'Viewer'</span>
+
+    role <span class="op">=</span> models.<span class="fn">CharField</span>(
+        max_length<span class="op">=</span><span class="nu">10</span>,
+        choices<span class="op">=</span><span class="cl">Role</span>.choices,
+        default<span class="op">=</span><span class="cl">Role</span>.VIEWER,
+    )
+
+    <span class="op">@</span>property
+    <span class="kw">def</span> <span class="fn">is_admin</span>(<span class="dt">self</span>):  <span class="kw">return</span> <span class="dt">self</span>.role <span class="op">==</span> <span class="dt">self</span>.<span class="cl">Role</span>.ADMIN
+    <span class="op">@</span>property
+    <span class="kw">def</span> <span class="fn">is_editor</span>(<span class="dt">self</span>): <span class="kw">return</span> <span class="dt">self</span>.role <span class="kw">in</span> (<span class="dt">self</span>.<span class="cl">Role</span>.ADMIN, <span class="dt">self</span>.<span class="cl">Role</span>.EDITOR)</code></pre>
+  </div>
+
+  <h3>2 — Write custom permission classes</h3>
+  <div class="code-block">
+    <div class="code-header"><span class="code-filename">permissions.py</span><span class="code-lang lang-python">Python</span></div>
+    <pre><code><span class="kw">from</span> rest_framework.permissions <span class="kw">import</span> <span class="cl">BasePermission</span>, <span class="cl">SAFE_METHODS</span>
+
+<span class="kw">class</span> <span class="cl">IsAdminRole</span>(<span class="cl">BasePermission</span>):
+    <span class="st">"""Allow access only to users with role='admin'."""</span>
+    <span class="kw">def</span> <span class="fn">has_permission</span>(<span class="dt">self</span>, request, view):
+        <span class="kw">return</span> request.user.is_authenticated <span class="op">and</span> request.user.<span class="fn">is_admin</span>
+
+<span class="kw">class</span> <span class="cl">IsEditorOrAdmin</span>(<span class="cl">BasePermission</span>):
+    <span class="st">"""Editors and admins can write; viewers can only read."""</span>
+    <span class="kw">def</span> <span class="fn">has_permission</span>(<span class="dt">self</span>, request, view):
+        <span class="kw">if</span> request.method <span class="kw">in</span> <span class="cl">SAFE_METHODS</span>:   <span class="cm"># GET, HEAD, OPTIONS</span>
+            <span class="kw">return</span> request.user.is_authenticated
+        <span class="kw">return</span> request.user.is_authenticated <span class="op">and</span> request.user.<span class="fn">is_editor</span>
+
+<span class="kw">class</span> <span class="cl">IsOwnerOrAdmin</span>(<span class="cl">BasePermission</span>):
+    <span class="st">"""Object-level: owner or admin may modify, others may read."""</span>
+    <span class="kw">def</span> <span class="fn">has_object_permission</span>(<span class="dt">self</span>, request, view, obj):
+        <span class="kw">if</span> request.method <span class="kw">in</span> <span class="cl">SAFE_METHODS</span>:
+            <span class="kw">return</span> <span class="kw">True</span>
+        <span class="kw">return</span> obj.author <span class="op">==</span> request.user <span class="op">or</span> request.user.<span class="fn">is_admin</span></code></pre>
+  </div>
+
+  <div class="callout callout-warn">
+    <strong>⚠️ has_permission vs has_object_permission</strong>
+    <code class="ic">has_permission</code> runs on every request (view-level). <code class="ic">has_object_permission</code> only runs when you call <code class="ic">self.get_object()</code> in your view — it does NOT auto-apply to list views or create views.
+  </div>
+</section>
+
+<!-- ══════════════════════════ ENDPOINTS ══════════════════════════ -->
+<section id="endpoints" class="section">
+  <h1>Protecting <em>Endpoints</em></h1>
+  <p class="lead">Three levels of protection — global defaults, per-view overrides, and object-level checks — letting you lock down exactly what needs locking.</p>
+
+  <h2>Level 1 — Global Defaults</h2>
+  <p>Set in <code class="ic">REST_FRAMEWORK</code> in <code class="ic">settings.py</code>. Every view inherits these unless overridden.</p>
+  <div class="code-block">
+    <div class="code-header"><span class="code-filename">settings.py</span><span class="code-lang lang-python">Python</span></div>
+    <pre><code>REST_FRAMEWORK <span class="op">=</span> {
+    <span class="st">'DEFAULT_AUTHENTICATION_CLASSES'</span>: [
+        <span class="st">'rest_framework_simplejwt.authentication.JWTAuthentication'</span>,
+    ],
+    <span class="st">'DEFAULT_PERMISSION_CLASSES'</span>: [
+        <span class="st">'rest_framework.permissions.IsAuthenticated'</span>,
+    ],
+    <span class="st">'DEFAULT_THROTTLE_CLASSES'</span>: [
+        <span class="st">'rest_framework.throttling.AnonRateThrottle'</span>,
+        <span class="st">'rest_framework.throttling.UserRateThrottle'</span>,
+    ],
+    <span class="st">'DEFAULT_THROTTLE_RATES'</span>: {
+        <span class="st">'anon'</span>: <span class="st">'30/minute'</span>,   <span class="cm"># unauthenticated users</span>
+        <span class="st">'user'</span>: <span class="st">'200/minute'</span>,  <span class="cm"># authenticated users</span>
+    },
+}</code></pre>
+  </div>
+
+  <h2>Level 2 — Per-View Overrides</h2>
+  <div class="compare-toggle">
+    <button class="compare-btn active" onclick="toggleCompare('view','fbv',this)">APIView</button>
+    <button class="compare-btn" onclick="toggleCompare('view','cbv',this)">ViewSet</button>
+  </div>
+  <div id="view-fbv" class="compare-content active">
+    <div class="code-block">
+      <div class="code-header"><span class="code-filename">views.py — APIView</span><span class="code-lang lang-python">Python</span></div>
+      <pre><code><span class="kw">from</span> rest_framework.views        <span class="kw">import</span> <span class="cl">APIView</span>
+<span class="kw">from</span> rest_framework.permissions  <span class="kw">import</span> IsAuthenticated, AllowAny
+<span class="kw">from</span> .permissions                <span class="kw">import</span> <span class="cl">IsAdminRole</span>, <span class="cl">IsEditorOrAdmin</span>
+
+<span class="kw">class</span> <span class="cl">PublicPostListView</span>(<span class="cl">APIView</span>):
+    permission_classes <span class="op">=</span> [<span class="cl">AllowAny</span>]          <span class="cm"># public read</span>
+
+    <span class="kw">def</span> <span class="fn">get</span>(<span class="dt">self</span>, request):
+        posts <span class="op">=</span> Post.objects.<span class="fn">all</span>()
+        ...
+
+<span class="kw">class</span> <span class="cl">PostCreateView</span>(<span class="cl">APIView</span>):
+    permission_classes <span class="op">=</span> [<span class="cl">IsEditorOrAdmin</span>]   <span class="cm"># editors + admins only</span>
+
+    <span class="kw">def</span> <span class="fn">post</span>(<span class="dt">self</span>, request):
+        ...
+
+<span class="kw">class</span> <span class="cl">AdminDashboard</span>(<span class="cl">APIView</span>):
+    permission_classes <span class="op">=</span> [<span class="cl">IsAdminRole</span>]       <span class="cm"># admin-only</span>
+
+    <span class="kw">def</span> <span class="fn">get</span>(<span class="dt">self</span>, request):
+        ...</code></pre>
+    </div>
+  </div>
+  <div id="view-cbv" class="compare-content">
+    <div class="code-block">
+      <div class="code-header"><span class="code-filename">views.py — ModelViewSet</span><span class="code-lang lang-python">Python</span></div>
+      <pre><code><span class="kw">from</span> rest_framework.viewsets    <span class="kw">import</span> <span class="cl">ModelViewSet</span>
+<span class="kw">from</span> rest_framework.permissions <span class="kw">import</span> IsAuthenticated, AllowAny
+<span class="kw">from</span> rest_framework.decorators  <span class="kw">import</span> action
+<span class="kw">from</span> .permissions               <span class="kw">import</span> <span class="cl">IsOwnerOrAdmin</span>, <span class="cl">IsEditorOrAdmin</span>
+
+<span class="kw">class</span> <span class="cl">PostViewSet</span>(<span class="cl">ModelViewSet</span>):
+    queryset         <span class="op">=</span> Post.objects.<span class="fn">all</span>()
+    serializer_class <span class="op">=</span> <span class="cl">PostSerializer</span>
+
+    <span class="kw">def</span> <span class="fn">get_permissions</span>(<span class="dt">self</span>):
+        <span class="kw">if</span> <span class="dt">self</span>.action <span class="kw">in</span> (<span class="st">'list'</span>, <span class="st">'retrieve'</span>):
+            <span class="kw">return</span> [<span class="cl">AllowAny</span>()]             <span class="cm"># public reads</span>
+        <span class="kw">if</span> <span class="dt">self</span>.action <span class="op">==</span> <span class="st">'create'</span>:
+            <span class="kw">return</span> [<span class="cl">IsEditorOrAdmin</span>()]      <span class="cm"># auth + editor role</span>
+        <span class="kw">return</span> [<span class="cl">IsOwnerOrAdmin</span>()]          <span class="cm"># update/delete: owner or admin</span>
+
+    <span class="kw">def</span> <span class="fn">perform_create</span>(<span class="dt">self</span>, serializer):
+        serializer.<span class="fn">save</span>(author<span class="op">=</span><span class="dt">self</span>.request.user)</code></pre>
+    </div>
+  </div>
+
+  <h2>Level 3 — Object-Level Check</h2>
+  <p>Object-level permissions are checked when a specific instance is being accessed. Always call <code class="ic">self.check_object_permissions()</code> explicitly or use <code class="ic">self.get_object()</code> which calls it for you.</p>
+  <div class="code-block">
+    <div class="code-header"><span class="code-filename">views.py</span><span class="code-lang lang-python">Python</span></div>
+    <pre><code><span class="kw">class</span> <span class="cl">PostUpdateView</span>(<span class="cl">APIView</span>):
+    permission_classes <span class="op">=</span> [<span class="cl">IsOwnerOrAdmin</span>]
+
+    <span class="kw">def</span> <span class="fn">put</span>(<span class="dt">self</span>, request, pk):
+        post <span class="op">=</span> <span class="fn">get_object_or_404</span>(<span class="cl">Post</span>, pk<span class="op">=</span>pk)
+        <span class="dt">self</span>.<span class="fn">check_object_permissions</span>(request, post)  <span class="cm"># ← triggers IsOwnerOrAdmin</span>
+        serializer <span class="op">=</span> <span class="cl">PostSerializer</span>(post, data<span class="op">=</span>request.data, partial<span class="op">=</span><span class="kw">True</span>)
+        <span class="kw">if</span> serializer.<span class="fn">is_valid</span>():
+            serializer.<span class="fn">save</span>()
+        <span class="kw">return</span> <span class="cl">Response</span>(serializer.data)</code></pre>
+  </div>
+
+  <h2>Your API Endpoint Map</h2>
+  <div class="ep-list">
+    <div class="ep-row"><span class="ep-method m-post">POST</span><span class="ep-path">/api/token/</span><span class="ep-guard">AllowAny</span></div>
+    <div class="ep-row"><span class="ep-method m-post">POST</span><span class="ep-path">/api/token/refresh/</span><span class="ep-guard">AllowAny</span></div>
+    <div class="ep-row"><span class="ep-method m-post">POST</span><span class="ep-path">/api/token/blacklist/</span><span class="ep-guard">IsAuthenticated</span></div>
+    <div class="ep-row"><span class="ep-method m-get">GET</span><span class="ep-path">/api/posts/</span><span class="ep-guard">AllowAny</span></div>
+    <div class="ep-row"><span class="ep-method m-get">GET</span><span class="ep-path">/api/posts/:id/</span><span class="ep-guard">AllowAny</span></div>
+    <div class="ep-row"><span class="ep-method m-post">POST</span><span class="ep-path">/api/posts/</span><span class="ep-guard">IsAuthenticated + IsEditorOrAdmin</span></div>
+    <div class="ep-row"><span class="ep-method m-put">PUT</span><span class="ep-path">/api/posts/:id/</span><span class="ep-guard">IsAuthenticated + IsOwnerOrAdmin</span></div>
+    <div class="ep-row"><span class="ep-method m-del">DELETE</span><span class="ep-path">/api/posts/:id/</span><span class="ep-guard">IsAuthenticated + IsAdminRole</span></div>
+    <div class="ep-row"><span class="ep-method m-get">GET</span><span class="ep-path">/api/admin/users/</span><span class="ep-guard">IsAuthenticated + IsAdminRole</span></div>
+  </div>
+</section>
+
+<!-- ══════════════════════════ THREATS ══════════════════════════ -->
+<section id="threats" class="section">
+  <h1>Common <em>Threats</em></h1>
+  <p class="lead">Knowing the attacks is the first step to defeating them. Here are the most common vulnerabilities in JWT-based APIs and how to neutralise each one.</p>
+
+  <div class="threat-grid">
+    <div class="threat-card high">
+      <div class="threat-name">Token Theft (XSS)</div>
+      <div class="threat-desc">Attacker injects script that reads localStorage and steals the access token.</div>
+      <div class="threat-fix">Store tokens in HttpOnly cookies, not localStorage. Enable Content-Security-Policy headers.</div>
+    </div>
+    <div class="threat-card high">
+      <div class="threat-name">Algorithm Confusion</div>
+      <div class="threat-desc">JWT header changed to <code>alg: none</code> or RS256 key swapped — server accepts forged tokens.</div>
+      <div class="threat-fix">Whitelist allowed algorithms explicitly. Never accept <code>alg: none</code>. Use simplejwt's ALLOWED_ALGORITHMS setting.</div>
+    </div>
+    <div class="threat-card high">
+      <div class="threat-name">Brute-Force Login</div>
+      <div class="threat-desc">Attacker hammers /api/token/ with password lists until one works.</div>
+      <div class="threat-fix">Apply aggressive throttle (e.g. 5/minute) on the token endpoint. Add account lockout after N failures.</div>
+    </div>
+    <div class="threat-card medium">
+      <div class="threat-name">CSRF on Cookie Storage</div>
+      <div class="threat-desc">If tokens are stored in cookies, CSRF attacks can forge authenticated requests.</div>
+      <div class="threat-fix">Use SameSite=Strict cookies. DRF's SessionAuthentication adds CSRF enforcement automatically.</div>
+    </div>
+    <div class="threat-card medium">
+      <div class="threat-name">Sensitive Data in Payload</div>
+      <div class="threat-desc">Passwords, PII, or card numbers embedded in unencrypted JWT payload leak on decode.</div>
+      <div class="threat-fix">Only store non-sensitive identifiers (user_id, role) in the payload. Use JWE if encryption is needed.</div>
+    </div>
+    <div class="threat-card medium">
+      <div class="threat-name">Long-Lived Tokens</div>
+      <div class="threat-desc">An access token valid for days gives attackers a wide window if stolen.</div>
+      <div class="threat-fix">Keep access tokens short (5–15 min). Use refresh tokens for persistence. Enable rotation + blacklisting.</div>
+    </div>
+  </div>
+
+  <h2>Production Hardening Checklist</h2>
+  <div class="code-block">
+    <div class="code-header"><span class="code-filename">settings.py — production hardening</span><span class="code-lang lang-python">Python</span></div>
+    <pre><code><span class="cm"># ── HTTPS ──────────────────────────────────────────</span>
+SECURE_SSL_REDIRECT         <span class="op">=</span> <span class="kw">True</span>
+SECURE_HSTS_SECONDS         <span class="op">=</span> <span class="nu">31536000</span>     <span class="cm"># 1 year HSTS</span>
+SECURE_HSTS_INCLUDE_SUBDOMAINS <span class="op">=</span> <span class="kw">True</span>
+SECURE_HSTS_PRELOAD         <span class="op">=</span> <span class="kw">True</span>
+SESSION_COOKIE_SECURE       <span class="op">=</span> <span class="kw">True</span>
+CSRF_COOKIE_SECURE          <span class="op">=</span> <span class="kw">True</span>
+
+<span class="cm"># ── Security headers ──────────────────────────────</span>
+SECURE_CONTENT_TYPE_NOSNIFF <span class="op">=</span> <span class="kw">True</span>
+SECURE_BROWSER_XSS_FILTER   <span class="op">=</span> <span class="kw">True</span>
+X_FRAME_OPTIONS             <span class="op">=</span> <span class="st">'DENY'</span>
+
+<span class="cm"># ── CORS (if using a separate frontend) ───────────</span>
+<span class="cm"># pip install django-cors-headers</span>
+CORS_ALLOWED_ORIGINS <span class="op">=</span> [<span class="st">'https://yourdomain.com'</span>]
+CORS_ALLOW_CREDENTIALS <span class="op">=</span> <span class="kw">True</span>  <span class="cm"># only if using cookie auth</span>
+
+<span class="cm"># ── Debug must be OFF in production ───────────────</span>
+DEBUG <span class="op">=</span> <span class="kw">False</span>
+ALLOWED_HOSTS <span class="op">=</span> [<span class="st">'yourdomain.com'</span>]</code></pre>
+  </div>
+
+  <div class="callout callout-danger">
+    <strong>🚨 Never commit SECRET_KEY</strong>
+    Your <code class="ic">SECRET_KEY</code> is the signing key for every JWT. If it leaks, all tokens can be forged. Use environment variables: <code class="ic">SECRET_KEY = os.environ['DJANGO_SECRET_KEY']</code> and rotate it immediately if exposed.
+  </div>
+
+  <h2>Logging &amp; Monitoring</h2>
+  <div class="code-block">
+    <div class="code-header"><span class="code-filename">views.py — audit logging example</span><span class="code-lang lang-python">Python</span></div>
+    <pre><code><span class="kw">import</span> logging
+logger <span class="op">=</span> logging.<span class="fn">getLogger</span>(<span class="st">'security'</span>)
+
+<span class="kw">class</span> <span class="cl">MyTokenView</span>(<span class="cl">TokenObtainPairView</span>):
+    <span class="kw">def</span> <span class="fn">post</span>(<span class="dt">self</span>, request, *args, **kwargs):
+        response <span class="op">=</span> <span class="kw">super</span>().<span class="fn">post</span>(request, *args, **kwargs)
+        <span class="kw">if</span> response.status_code <span class="op">==</span> <span class="nu">200</span>:
+            logger.<span class="fn">info</span>(<span class="st">"LOGIN_SUCCESS user=%s ip=%s"</span>,
+                request.data.<span class="fn">get</span>(<span class="st">'username'</span>),
+                request.<span class="fn">META.get</span>(<span class="st">'REMOTE_ADDR'</span>))
+        <span class="kw">else</span>:
+            logger.<span class="fn">warning</span>(<span class="st">"LOGIN_FAILED user=%s ip=%s"</span>,
+                request.data.<span class="fn">get</span>(<span class="st">'username'</span>),
+                request.<span class="fn">META.get</span>(<span class="st">'REMOTE_ADDR'</span>))
+        <span class="kw">return</span> response</code></pre>
+  </div>
+</section>
+
+<!-- ══════════════════════════ QUIZ ══════════════════════════ -->
+<section id="quiz" class="section">
+  <h1>Knowledge <em>Quiz</em></h1>
+  <p class="lead">Six questions across JWT, RBAC, and endpoint security. Click to reveal the answer and explanation.</p>
+
+  <div class="quiz-q">
+    <div class="quiz-text">1. A JWT's payload contains <code class="ic">{"role":"admin"}</code>. Is this value trustworthy?</div>
+    <div class="quiz-options">
+      <button class="quiz-opt" onclick="answer(this,'wrong','The payload IS readable by anyone with the token (it is just base64 encoded), but that is not the main security concern here.')">No — the payload is encrypted and hidden</button>
+      <button class="quiz-opt" onclick="answer(this,'correct','✓ The payload is readable (base64, not encrypted) but the signature prevents tampering. If the server verifies the signature with the correct SECRET_KEY before trusting the payload, the role claim is safe to use.')">Yes — the signature prevents tampering, so verified claims are trustworthy</button>
+      <button class="quiz-opt" onclick="answer(this,'wrong','The payload can actually hold any JSON values — that is the point of custom claims.')">No — JWT payloads can only hold standard fields like exp and iat</button>
+    </div>
+    <div class="quiz-feedback"></div>
+  </div>
+
+  <div class="quiz-q">
+    <div class="quiz-text">2. Why should access tokens be short-lived (5–15 minutes) while refresh tokens can last days?</div>
+    <div class="quiz-options">
+      <button class="quiz-opt" onclick="answer(this,'wrong','Long tokens are not more efficient — JWTs are small regardless of lifetime.')">Long tokens cause server slowdowns</button>
+      <button class="quiz-opt" onclick="answer(this,'correct','✓ Short access tokens limit the damage window if stolen — the attacker has minutes, not days. Refresh tokens live longer but are only sent to one endpoint (/token/refresh) and can be rotated and blacklisted.')">Stolen access tokens are valid for less time, reducing attack exposure</button>
+      <button class="quiz-opt" onclick="answer(this,'wrong','There is no such Django restriction.')">Django requires this separation for its ORM</button>
+    </div>
+    <div class="quiz-feedback"></div>
+  </div>
+
+  <div class="quiz-q">
+    <div class="quiz-text">3. In DRF, which method do you override in a <code class="ic">ModelViewSet</code> to apply different permissions for different actions (list, create, update)?</div>
+    <div class="quiz-options">
+      <button class="quiz-opt" onclick="answer(this,'wrong','permission_classes is a class attribute — it sets one permission for all actions, not per-action.')">permission_classes</button>
+      <button class="quiz-opt" onclick="answer(this,'wrong','get_object() retrieves the object and triggers object-level checks, but it does not set per-action permission classes.')">get_object()</button>
+      <button class="quiz-opt" onclick="answer(this,'correct','✓ get_permissions() is called on every request. Override it to return different permission class instances based on self.action — for example, AllowAny for list/retrieve, IsEditorOrAdmin for create.')">get_permissions()</button>
+    </div>
+    <div class="quiz-feedback"></div>
+  </div>
+
+  <div class="quiz-q">
+    <div class="quiz-text">4. What is the difference between <code class="ic">has_permission()</code> and <code class="ic">has_object_permission()</code>?</div>
+    <div class="quiz-options">
+      <button class="quiz-opt" onclick="answer(this,'wrong','Both can be overridden on any BasePermission subclass.')">has_object_permission is only for admin views</button>
+      <button class="quiz-opt" onclick="answer(this,'correct','✓ has_permission is a view-level check run on every request. has_object_permission is an instance-level check run only when get_object() is called. Critically, has_object_permission does NOT run on list or create — only on retrieve/update/delete of a single instance.')">has_permission is view-level (every request); has_object_permission is instance-level (only on get_object)</button>
+      <button class="quiz-opt" onclick="answer(this,'wrong','They serve different purposes — object permission checks the specific instance, not just authenticated status.')">They are identical; has_object_permission just has a different name</button>
+    </div>
+    <div class="quiz-feedback"></div>
+  </div>
+
+  <div class="quiz-q">
+    <div class="quiz-text">5. An attacker modifies the JWT header to <code class="ic">{"alg": "none"}</code> and removes the signature. What setting prevents your server from accepting this?</div>
+    <div class="quiz-options">
+      <button class="quiz-opt" onclick="answer(this,'wrong','ROTATE_REFRESH_TOKENS handles refresh token rotation — it does not block algorithm attacks on access tokens.')">ROTATE_REFRESH_TOKENS = True</button>
+      <button class="quiz-opt" onclick="answer(this,'wrong','BLACKLIST_AFTER_ROTATION manages blacklisted refresh tokens, not algorithm validation.')">BLACKLIST_AFTER_ROTATION = True</button>
+      <button class="quiz-opt" onclick="answer(this,'correct','✓ Setting ALGORITHM = \"HS256\" (or \"RS256\") in SIMPLE_JWT makes simplejwt only accept tokens signed with that algorithm. Tokens with alg=none are rejected outright. Never use a library that accepts alg=none.')">ALGORITHM = "HS256" in SIMPLE_JWT (whitelist the algorithm)</button>
+    </div>
+    <div class="quiz-feedback"></div>
+  </div>
+
+  <div class="quiz-q">
+    <div class="quiz-text">6. You want to "log out" a user by invalidating their JWT. What is the correct approach with simplejwt?</div>
+    <div class="quiz-options">
+      <button class="quiz-opt" onclick="answer(this,'wrong','Deleting the user does not invalidate existing tokens — the tokens are signed and will remain valid until expiry.')">Delete the user from the database</button>
+      <button class="quiz-opt" onclick="answer(this,'wrong','JWTs are stateless — the server does not store them, so there is nothing to delete on that side unless you use a denylist.')">Delete the token from the server session store</button>
+      <button class="quiz-opt" onclick="answer(this,'correct','✓ POST the refresh token to /api/token/blacklist/. With BLACKLIST_AFTER_ROTATION enabled, simplejwt adds the refresh token to a denylist table. Future refresh attempts with that token are rejected. The short-lived access token expires on its own.')">POST the refresh token to /api/token/blacklist/ to add it to the denylist</button>
+    </div>
+    <div class="quiz-feedback"></div>
+  </div>
+</section>
+
+</main>
+</div>
+
+</body>
+</html>

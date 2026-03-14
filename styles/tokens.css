@@ -1,0 +1,42 @@
+/* ═══════════════════════════════════════════════════════
+   DESIGN TOKENS — Learn Django
+   Centralized variables, fonts, reset, and base styles
+   ═══════════════════════════════════════════════════════ */
+
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;600;700&family=Fraunces:ital,wght@0,300;0,600;0,900;1,300;1,600&display=swap');
+
+:root {
+  /* ── Surfaces ── */
+  --bg:       #0d0f14;
+  --surface:  #13161e;
+  --surface2: #1a1e2a;
+  --border:   #252a38;
+
+  /* ── Accents ── */
+  --accent:   #4ade80;   /* green  */
+  --accent2:  #38bdf8;   /* blue   */
+  --accent3:  #f472b6;   /* pink   */
+  --accent4:  #fb923c;   /* orange */
+
+  /* ── Text ── */
+  --text:     #e2e8f0;
+  --muted:    #64748b;
+  --heading:  #f8fafc;
+}
+
+/* ── Reset ── */
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+/* ── Base body ── */
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'JetBrains Mono', monospace;
+  line-height: 1.7;
+  min-height: 100vh;
+}
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }

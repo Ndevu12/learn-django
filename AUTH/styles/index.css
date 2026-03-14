@@ -1,0 +1,184 @@
+/* ═══════════════════════════════════════════════════════
+   AUTH MODULE — Page-specific styles
+   Shared tokens, components, and responsive imported
+   from ../styles/ via HTML <link> tags
+   ═══════════════════════════════════════════════════════ */
+
+/* ══════════════════════════ JWT VISUAL ══════════════════════════ */
+.jwt-visual {
+  display: flex;
+  gap: 0;
+  margin: 1.5rem 0;
+  border-radius: 6px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.72rem;
+}
+.jwt-part {
+  flex: 1;
+  padding: 1rem;
+  min-width: 0;
+}
+.jwt-part-header  { background: rgba(220,38,38,0.85); color: white; }
+.jwt-part-payload { background: rgba(124,58,237,0.85); color: white; }
+.jwt-part-sig     { background: rgba(5,150,105,0.85);  color: white; }
+.jwt-part-label   { font-size: 0.6rem; letter-spacing: 0.12em; text-transform: uppercase; opacity: 0.8; margin-bottom: 0.4rem; }
+.jwt-part-name    { font-size: 0.88rem; font-weight: 600; margin-bottom: 0.3rem; }
+.jwt-part-desc    { font-size: 0.68rem; opacity: 0.85; line-height: 1.5; }
+.jwt-dot {
+  display: flex;
+  align-items: center;
+  font-size: 1.2rem;
+  font-weight: 900;
+  padding: 0 4px;
+  background: var(--surface);
+  color: var(--muted);
+}
+
+/* ══════════════════════════ TOKEN STRING ══════════════════════════ */
+.token-str {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 0.9rem 1.1rem;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.7rem;
+  line-height: 1.8;
+  word-break: break-all;
+  margin: 1rem 0;
+}
+.tok-h   { color: #f87171; }
+.tok-p   { color: #c084fc; }
+.tok-s   { color: #34d399; }
+.tok-dot { color: var(--muted); font-size: 1rem; }
+
+/* ══════════════════════════ RBAC GRID ══════════════════════════ */
+.rbac-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 0.9rem;
+  margin: 1.25rem 0;
+}
+.rbac-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 1rem;
+  transition: border-color 0.2s;
+}
+.rbac-card:hover { border-color: var(--accent); }
+.rbac-role {
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 600;
+  font-size: 0.8rem;
+  margin-bottom: 0.5rem;
+  padding: 2px 0;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 0.4rem;
+}
+.rbac-perm {
+  font-size: 0.72rem;
+  color: #94a3b8;
+  margin: 3px 0;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.rbac-perm::before { content: '✓'; color: var(--accent); font-size: 0.65rem; flex-shrink: 0; }
+.rbac-deny { color: var(--muted); text-decoration: line-through; }
+.rbac-deny::before { content: '✗'; color: #f87171 !important; }
+
+/* ══════════════════════════ PERMISSION MATRIX ══════════════════════════ */
+.matrix {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 1.25rem 0;
+  font-size: 0.78rem;
+}
+.matrix th, .matrix td {
+  padding: 0.55rem 0.9rem;
+  border: 1px solid var(--border);
+  text-align: center;
+}
+.matrix th:first-child, .matrix td:first-child { text-align: left; }
+.matrix th {
+  background: var(--surface2);
+  color: var(--muted);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.65rem;
+  letter-spacing: 0.08em;
+  font-weight: 400;
+  text-transform: uppercase;
+}
+.matrix .row-head {
+  background: var(--surface);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.7rem;
+  font-weight: 500;
+  color: var(--text);
+}
+.m-y { color: var(--accent);  font-weight: 700; }
+.m-n { color: var(--muted); }
+.m-c { color: var(--accent4); font-weight: 600; }
+
+/* ══════════════════════════ THREAT CARDS ══════════════════════════ */
+.threat-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin: 1.25rem 0;
+}
+.threat-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 1rem;
+  border-top: 3px solid;
+}
+.threat-card.high   { border-top-color: #f87171; }
+.threat-card.medium { border-top-color: var(--accent4); }
+.threat-name {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.76rem;
+  font-weight: 600;
+  margin-bottom: 0.4rem;
+}
+.threat-card.high .threat-name   { color: #f87171; }
+.threat-card.medium .threat-name { color: var(--accent4); }
+.threat-desc { font-size: 0.74rem; color: var(--muted); line-height: 1.6; }
+.threat-fix  { font-size: 0.7rem; color: var(--accent); margin-top: 0.5rem; font-weight: 500; }
+.threat-fix::before { content: '✓ '; }
+
+/* ══════════════════════════ ENDPOINT LIST ══════════════════════════ */
+.ep-list {
+  margin: 1.25rem 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.ep-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.6rem 0.9rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.75rem;
+}
+.ep-method {
+  font-size: 0.62rem;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 2px;
+  min-width: 40px;
+  text-align: center;
+}
+.m-get  { background: rgba(56,189,248,0.12);  color: var(--accent2); }
+.m-post { background: rgba(74,222,128,0.12);  color: var(--accent); }
+.m-put  { background: rgba(251,146,60,0.12);  color: var(--accent4); }
+.m-del  { background: rgba(248,113,113,0.12); color: #f87171; }
+.ep-path  { color: var(--text); flex: 1; }
+.ep-guard { font-size: 0.62rem; color: var(--muted); margin-left: auto; }
