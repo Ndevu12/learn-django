@@ -1,0 +1,164 @@
+/* ═══════════════════════════════════════════════════════
+   DEPLOYMENT MODULE — Page-specific styles
+   Shared tokens, components, responsive from ../styles/
+   ═══════════════════════════════════════════════════════ */
+
+/* ── Pipeline diagram (horizontal stages) ── */
+.pipeline {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  margin: 1.5rem 0;
+  overflow-x: auto;
+  padding-bottom: 0.5rem;
+}
+.pipe-stage {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 0.75rem 0.9rem;
+  min-width: 110px;
+  text-align: center;
+  flex-shrink: 0;
+  transition: border-color 0.2s;
+}
+.pipe-stage:hover { border-color: var(--accent); }
+.pipe-icon { font-size: 1.15rem; margin-bottom: 4px; }
+.pipe-name { font-size: 0.72rem; font-weight: 600; color: var(--text); }
+.pipe-sub  { font-size: 0.6rem;  color: var(--muted); margin-top: 2px; }
+.pipe-arrow {
+  padding: 0 6px;
+  color: var(--muted);
+  font-size: 0.75rem;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+}
+.pipe-arrow-lbl { font-size: 0.55rem; color: var(--muted); white-space: nowrap; }
+
+/* ── Environment variable cards ── */
+.env-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+  gap: 0.85rem;
+  margin: 1.25rem 0;
+}
+.env-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 1rem 1.1rem;
+  transition: border-color 0.2s, transform 0.15s;
+}
+.env-card:hover { border-color: var(--accent4); transform: translateY(-2px); }
+.env-key   { font-size: 0.72rem; font-weight: 700; color: var(--accent4); margin-bottom: 0.3rem; }
+.env-val   { font-size: 0.68rem; color: var(--accent3); margin-bottom: 0.35rem; }
+.env-desc  { font-size: 0.68rem; color: var(--muted); line-height: 1.55; }
+
+/* ── Dockerfile layer visual ── */
+.docker-layers {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  margin: 1.5rem 0;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+}
+.dl {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.65rem 1.1rem;
+  border-bottom: 1px solid var(--border);
+  font-size: 0.75rem;
+  transition: background 0.15s;
+}
+.dl:last-child { border-bottom: none; }
+.dl:hover { background: var(--surface2); }
+.dl-num  { font-size: 0.62rem; color: var(--muted); width: 18px; text-align: right; flex-shrink: 0; }
+.dl-inst { font-weight: 700; font-size: 0.7rem; width: 60px; flex-shrink: 0; }
+.dl-body { color: var(--text); flex: 1; }
+.dl-note { font-size: 0.65rem; color: var(--muted); flex-shrink: 0; }
+.dl-from   .dl-inst { color: var(--accent3); }
+.dl-work   .dl-inst { color: var(--accent2); }
+.dl-copy   .dl-inst { color: var(--accent4); }
+.dl-run    .dl-inst { color: var(--accent); }
+.dl-env    .dl-inst { color: var(--accent4); }
+.dl-expose .dl-inst { color: #a78bfa; }
+.dl-cmd    .dl-inst { color: var(--accent3); }
+
+/* ── Checklist (deploy module) ── */
+.checklist { margin: 1.25rem 0; display: flex; flex-direction: column; gap: 0.4rem; }
+.chk-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 0.6rem 0.9rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  font-size: 0.78rem;
+  cursor: pointer;
+  transition: border-color 0.15s;
+  user-select: none;
+}
+.chk-item:hover { border-color: var(--accent); }
+.chk-item.checked { border-color: rgba(74,222,128,0.3); background: rgba(74,222,128,0.04); }
+.chk-box {
+  width: 16px; height: 16px;
+  border-radius: 3px;
+  border: 1px solid var(--border);
+  flex-shrink: 0;
+  margin-top: 1px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.6rem;
+  transition: all 0.15s;
+}
+.chk-item.checked .chk-box { background: var(--accent); border-color: var(--accent); color: var(--bg); font-weight: 700; }
+.chk-text { flex: 1; color: #94a3b8; line-height: 1.5; }
+.chk-item.checked .chk-text { color: var(--text); }
+.chk-badge { font-size: 0.6rem; flex-shrink: 0; margin-top: 2px; }
+
+/* Muted pill for checklist tags (shared .pill-* from components) */
+.pill-muted {
+  background: rgba(100,116,139,0.12);
+  color: var(--muted);
+  border: 1px solid rgba(100,116,139,0.25);
+}
+
+/* ── CI/CD cards ── */
+.cicd-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 0.9rem;
+  margin: 1.25rem 0;
+}
+.cicd-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 1.1rem;
+  border-top: 3px solid var(--border);
+  transition: transform 0.15s;
+}
+.cicd-card:hover { transform: translateY(-2px); }
+.cicd-card.ci  { border-top-color: var(--accent2); }
+.cicd-card.cd  { border-top-color: var(--accent); }
+.cicd-card.mon { border-top-color: var(--accent4); }
+.cicd-name { font-size: 0.8rem; font-weight: 700; color: var(--heading); margin-bottom: 0.45rem; }
+.cicd-card.ci  .cicd-name { color: var(--accent2); }
+.cicd-card.cd  .cicd-name { color: var(--accent); }
+.cicd-card.mon .cicd-name { color: var(--accent4); }
+.cicd-desc { font-size: 0.72rem; color: var(--muted); line-height: 1.6; }
+
+/* YAML badge in code headers */
+.lang-yaml {
+  background: rgba(244,114,182,0.12);
+  color: var(--accent3);
+}
+
+/* Env / YAML key highlighting inside <pre> (shared components cover kw, st, op, etc.) */
+.layout pre .va { color: var(--accent); }
