@@ -1,0 +1,767 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Deployment &amp; Best Practices — Env · Docker · CI/CD</title>
+<link rel="stylesheet" href="../styles/tokens.css">
+<link rel="stylesheet" href="../styles/components.css">
+<link rel="stylesheet" href="../styles/responsive.css">
+<link rel="stylesheet" href="styles/index.css">
+</head>
+<body>
+
+<script>
+window.__PAGE = {
+  tag:      'DEPLOYMENT MODULE',
+  homeLink: '../index.html',
+  nav: [
+    { id: 'overview',  label: 'Overview' },
+    { id: 'envvars',   label: 'Env Vars' },
+    { id: 'docker',    label: 'Docker' },
+    { id: 'compose',   label: 'Compose' },
+    { id: 'cicd',      label: 'CI/CD' },
+    { id: 'checklist', label: 'Checklist' },
+    { id: 'quiz',      label: 'Quiz' }
+  ]
+};
+</script>
+<script src="../scripts/header.js"></script>
+
+<div class="layout">
+
+<aside>
+  <div class="sidebar-section">
+    <div class="sidebar-label">Sections</div>
+    <div class="sidebar-item active" onclick="showSection('overview',null,this)"><span class="sidebar-dot">◈</span>Overview</div>
+    <div class="sidebar-item" onclick="showSection('envvars',null,this)"><span class="sidebar-dot">◈</span>Environment Variables</div>
+    <div class="sidebar-item" onclick="showSection('docker',null,this)"><span class="sidebar-dot">◈</span>Dockerizing the App</div>
+    <div class="sidebar-item" onclick="showSection('compose',null,this)"><span class="sidebar-dot">◈</span>Docker Compose</div>
+    <div class="sidebar-item" onclick="showSection('cicd',null,this)"><span class="sidebar-dot">◈</span>CI/CD Pipelines</div>
+    <div class="sidebar-item" onclick="showSection('checklist',null,this)"><span class="sidebar-dot">◈</span>Deploy Checklist</div>
+    <div class="sidebar-item" onclick="showSection('quiz',null,this)"><span class="sidebar-dot">◈</span>Knowledge Quiz</div>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-label">Key Files</div>
+    <div class="sidebar-item sidebar-item-sm" onclick="showSection('envvars',null,this)"><span class="sidebar-dot"></span>.env</div>
+    <div class="sidebar-item sidebar-item-sm" onclick="showSection('envvars',null,this)"><span class="sidebar-dot"></span>settings.py</div>
+    <div class="sidebar-item sidebar-item-sm" onclick="showSection('docker',null,this)"><span class="sidebar-dot"></span>Dockerfile</div>
+    <div class="sidebar-item sidebar-item-sm" onclick="showSection('compose',null,this)"><span class="sidebar-dot"></span>docker-compose.yml</div>
+    <div class="sidebar-item sidebar-item-sm" onclick="showSection('cicd',null,this)"><span class="sidebar-dot"></span>.github/workflows/*.yml</div>
+    <div class="sidebar-item sidebar-item-sm" onclick="showSection('docker',null,this)"><span class="sidebar-dot"></span>.dockerignore</div>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-label">Tools</div>
+    <div class="sidebar-item sidebar-item-sm"><span class="sidebar-dot" style="background:var(--accent4)"></span>python-decouple</div>
+    <div class="sidebar-item sidebar-item-sm"><span class="sidebar-dot" style="background:var(--accent2)"></span>Docker + BuildKit</div>
+    <div class="sidebar-item sidebar-item-sm"><span class="sidebar-dot" style="background:var(--accent3)"></span>GitHub Actions</div>
+    <div class="sidebar-item sidebar-item-sm"><span class="sidebar-dot" style="background:var(--accent)"></span>Gunicorn + Nginx</div>
+  </div>
+</aside>
+
+<main>
+
+    <!-- ══════════════════════════ OVERVIEW ══════════════════════════ -->
+    <section id="overview" class="section active">
+      <h1>Deployment &amp;<br><em>Best Practices</em></h1>
+      <p class="lead">Safely shipping your Django app to production — locking down secrets with python-decouple, packaging everything with Docker, and automating the pipeline with CI/CD.</p>
+
+      <p>A working app on your laptop is just the beginning. The gap between <code class="ic">runserver</code> and a real production deployment involves managing secrets, reproducible environments, and automated testing gates. These three tools close that gap.</p>
+
+      <div class="callout callout-info">
+        <strong>📦 What we'll deploy</strong>
+        The <strong>Books API</strong> from the CRUD module — a Django + DRF app backed by PostgreSQL, served by Gunicorn, reverse-proxied by Nginx, all orchestrated with Docker Compose, and deployed automatically on every push via GitHub Actions.
+      </div>
+
+      <h2>The Deployment Stack</h2>
+      <table class="crud-table">
+        <thead><tr><th>Layer</th><th>Tool</th><th>Purpose</th></tr></thead>
+        <tbody>
+          <tr><td><span class="pill pill-orange">Config</span></td><td>python-decouple</td><td>Read env vars from <code>.env</code> file; never hardcode secrets</td></tr>
+          <tr><td><span class="pill pill-blue">Runtime</span></td><td>Gunicorn</td><td>Production WSGI server replacing <code>runserver</code></td></tr>
+          <tr><td><span class="pill pill-blue">Proxy</span></td><td>Nginx</td><td>Handles static files, TLS termination, load balancing</td></tr>
+          <tr><td><span class="pill pill-pink">Container</span></td><td>Docker</td><td>Reproducible, isolated build that runs everywhere</td></tr>
+          <tr><td><span class="pill pill-pink">Orchestration</span></td><td>Docker Compose</td><td>Runs web + db + nginx as a single declarative unit</td></tr>
+          <tr><td><span class="pill pill-green">Automation</span></td><td>GitHub Actions</td><td>Test → Build → Push → Deploy on every git push</td></tr>
+        </tbody>
+      </table>
+
+      <h2>The Full Pipeline at a Glance</h2>
+      <div class="pipeline">
+        <div class="pipe-stage">
+          <div class="pipe-icon">💻</div>
+          <div class="pipe-name">Code</div>
+          <div class="pipe-sub">git push</div>
+        </div>
+        <div class="pipe-arrow">
+          <div>→</div><div class="pipe-arrow-lbl">trigger</div>
+        </div>
+        <div class="pipe-stage" style="border-color:rgba(56,189,248,0.4)">
+          <div class="pipe-icon">🧪</div>
+          <div class="pipe-name">Test</div>
+          <div class="pipe-sub">pytest + lint</div>
+        </div>
+        <div class="pipe-arrow">
+          <div>→</div><div class="pipe-arrow-lbl">pass</div>
+        </div>
+        <div class="pipe-stage" style="border-color:rgba(244,114,182,0.4)">
+          <div class="pipe-icon">🐳</div>
+          <div class="pipe-name">Build</div>
+          <div class="pipe-sub">docker build</div>
+        </div>
+        <div class="pipe-arrow">
+          <div>→</div><div class="pipe-arrow-lbl">push</div>
+        </div>
+        <div class="pipe-stage" style="border-color:rgba(244,114,182,0.4)">
+          <div class="pipe-icon">📦</div>
+          <div class="pipe-name">Registry</div>
+          <div class="pipe-sub">ghcr.io / ECR</div>
+        </div>
+        <div class="pipe-arrow">
+          <div>→</div><div class="pipe-arrow-lbl">deploy</div>
+        </div>
+        <div class="pipe-stage" style="border-color:rgba(74,222,128,0.4)">
+          <div class="pipe-icon">🚀</div>
+          <div class="pipe-name">Production</div>
+          <div class="pipe-sub">docker pull</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══════════════════════════ ENV VARS ══════════════════════════ -->
+    <section id="envvars" class="section">
+      <h1>Environment <em>Variables</em></h1>
+      <p class="lead">Keep secrets out of source control by reading configuration from the environment — not from hardcoded strings.</p>
+
+      <div class="callout callout-warn">
+        <strong>⚠️ Never commit secrets</strong>
+        <code class="ic">SECRET_KEY</code>, database passwords, and API keys must never appear in your git history. Even a single commit is enough for an attacker to find them via GitHub search or git log.
+      </div>
+
+      <h2>python-decouple Setup</h2>
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">1</div>
+          <div class="step-body">
+            <div class="step-title">Install</div>
+            <div class="code-block">
+              <div class="code-header"><span class="code-filename">terminal</span><span class="code-lang lang-bash">bash</span></div>
+              <pre><code>pip install python-decouple
+<span class="cm"># add to requirements.txt</span></code></pre>
+            </div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <div class="step-body">
+            <div class="step-title">Create a <code class="ic">.env</code> file in the project root</div>
+            <div class="code-block">
+              <div class="code-header"><span class="code-filename">.env</span><span class="code-lang lang-txt">.env</span></div>
+              <pre><code><span class="cm"># Django core</span>
+<span class="va">DEBUG</span><span class="op">=</span><span class="st">True</span>
+<span class="va">SECRET_KEY</span><span class="op">=</span><span class="st">your-very-secret-key-here</span>
+<span class="va">ALLOWED_HOSTS</span><span class="op">=</span><span class="st">localhost,127.0.0.1</span>
+
+<span class="cm"># Database</span>
+<span class="va">DB_NAME</span><span class="op">=</span><span class="st">mydb</span>
+<span class="va">DB_USER</span><span class="op">=</span><span class="st">postgres</span>
+<span class="va">DB_PASSWORD</span><span class="op">=</span><span class="st">supersecret</span>
+<span class="va">DB_HOST</span><span class="op">=</span><span class="st">db</span>
+<span class="va">DB_PORT</span><span class="op">=</span><span class="st">5432</span>
+
+<span class="cm"># Email (optional)</span>
+<span class="va">EMAIL_HOST_USER</span><span class="op">=</span><span class="st">noreply@example.com</span>
+<span class="va">EMAIL_HOST_PASSWORD</span><span class="op">=</span><span class="st">smtp-password</span></code></pre>
+            </div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">3</div>
+          <div class="step-body">
+            <div class="step-title">Add <code class="ic">.env</code> to <code class="ic">.gitignore</code></div>
+            <div class="code-block">
+              <div class="code-header"><span class="code-filename">.gitignore</span><span class="code-lang lang-txt">text</span></div>
+              <pre><code>.env
+*.pyc
+__pycache__/
+db.sqlite3
+staticfiles/</code></pre>
+            </div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">4</div>
+          <div class="step-body">
+            <div class="step-title">Read values in <code class="ic">settings.py</code></div>
+            <div class="code-block">
+              <div class="code-header"><span class="code-filename">settings.py</span><span class="code-lang lang-python">Python</span></div>
+              <pre><code><span class="kw">from</span> decouple <span class="kw">import</span> config, Csv
+
+<span class="cm"># ── Core ──────────────────────────────────────────────</span>
+<span class="va">SECRET_KEY</span>    <span class="op">=</span> <span class="fn">config</span>(<span class="st">'SECRET_KEY'</span>)
+<span class="va">DEBUG</span>         <span class="op">=</span> <span class="fn">config</span>(<span class="st">'DEBUG'</span>, default<span class="op">=</span><span class="kw">False</span>, cast<span class="op">=</span>bool)
+<span class="va">ALLOWED_HOSTS</span> <span class="op">=</span> <span class="fn">config</span>(<span class="st">'ALLOWED_HOSTS'</span>, cast<span class="op">=</span><span class="cl">Csv</span>())
+
+<span class="cm"># ── Database ──────────────────────────────────────────</span>
+<span class="va">DATABASES</span> <span class="op">=</span> {
+    <span class="st">'default'</span>: {
+        <span class="st">'ENGINE'</span>:   <span class="st">'django.db.backends.postgresql'</span>,
+        <span class="st">'NAME'</span>:     <span class="fn">config</span>(<span class="st">'DB_NAME'</span>),
+        <span class="st">'USER'</span>:     <span class="fn">config</span>(<span class="st">'DB_USER'</span>),
+        <span class="st">'PASSWORD'</span>: <span class="fn">config</span>(<span class="st">'DB_PASSWORD'</span>),
+        <span class="st">'HOST'</span>:     <span class="fn">config</span>(<span class="st">'DB_HOST'</span>, default<span class="op">=</span><span class="st">'localhost'</span>),
+        <span class="st">'PORT'</span>:     <span class="fn">config</span>(<span class="st">'DB_PORT'</span>, default<span class="op">=</span><span class="st">'5432'</span>),
+    }
+}</code></pre>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <h2>Key Variables Reference</h2>
+      <div class="env-grid">
+        <div class="env-card">
+          <div class="env-key">SECRET_KEY</div>
+          <div class="env-val">50-char random string</div>
+          <div class="env-desc">Signs cookies, sessions, and JWTs. Rotate immediately if leaked.</div>
+        </div>
+        <div class="env-card">
+          <div class="env-key">DEBUG</div>
+          <div class="env-val">False (production)</div>
+          <div class="env-desc">When True, Django shows full stack traces. Never True in prod.</div>
+        </div>
+        <div class="env-card">
+          <div class="env-key">ALLOWED_HOSTS</div>
+          <div class="env-val">yourdomain.com</div>
+          <div class="env-desc">Comma-separated hostnames Django will serve. Prevents host-header attacks.</div>
+        </div>
+        <div class="env-card">
+          <div class="env-key">DB_PASSWORD</div>
+          <div class="env-val">random strong password</div>
+          <div class="env-desc">PostgreSQL password. Must match the value in docker-compose.yml.</div>
+        </div>
+        <div class="env-card">
+          <div class="env-key">DB_HOST</div>
+          <div class="env-val">db (in Docker)</div>
+          <div class="env-desc">Service name in docker-compose resolves as a hostname inside the network.</div>
+        </div>
+        <div class="env-card">
+          <div class="env-key">DJANGO_SETTINGS_MODULE</div>
+          <div class="env-val">mysite.settings</div>
+          <div class="env-desc">Tells Django which settings file to use. Useful for separate prod/dev configs.</div>
+        </div>
+      </div>
+
+      <div class="callout callout-tip">
+        <strong>💡 Decouple priority order</strong>
+        python-decouple looks for values in this order: (1) actual OS environment variables, (2) <code class="ic">.env</code> file, (3) <code class="ic">.ini</code> file, (4) the <code class="ic">default=</code> argument. This means production servers can inject secrets via environment without needing a file on disk.
+      </div>
+    </section>
+
+    <!-- ══════════════════════════ DOCKER ══════════════════════════ -->
+    <section id="docker" class="section">
+      <h1>Dockerizing <em>the App</em></h1>
+      <p class="lead">Package your Django app into a container image — identical behaviour on every machine, from your laptop to the cloud.</p>
+
+      <h2>Anatomy of the Dockerfile</h2>
+      <p>Each instruction creates a new layer. Ordering matters — put things that change least at the top to maximise cache hits.</p>
+
+      <div class="docker-layers">
+        <div class="dl dl-from"><div class="dl-num">1</div><div class="dl-inst">FROM</div><div class="dl-body">python:3.12-slim</div><div class="dl-note">base image</div></div>
+        <div class="dl dl-env"><div class="dl-num">2</div><div class="dl-inst">ENV</div><div class="dl-body">PYTHONDONTWRITEBYTECODE=1  PYTHONUNBUFFERED=1</div><div class="dl-note">no .pyc / live logs</div></div>
+        <div class="dl dl-work"><div class="dl-num">3</div><div class="dl-inst">WORKDIR</div><div class="dl-body">/app</div><div class="dl-note">all cmds run here</div></div>
+        <div class="dl dl-copy"><div class="dl-num">4</div><div class="dl-inst">COPY</div><div class="dl-body">requirements.txt .</div><div class="dl-note">copy deps first</div></div>
+        <div class="dl dl-run"><div class="dl-num">5</div><div class="dl-inst">RUN</div><div class="dl-body">pip install --no-cache-dir -r requirements.txt</div><div class="dl-note">cached unless req changes</div></div>
+        <div class="dl dl-copy"><div class="dl-num">6</div><div class="dl-inst">COPY</div><div class="dl-body">. .</div><div class="dl-note">copy app code last</div></div>
+        <div class="dl dl-expose"><div class="dl-num">7</div><div class="dl-inst">EXPOSE</div><div class="dl-body">8000</div><div class="dl-note">document port</div></div>
+        <div class="dl dl-cmd"><div class="dl-num">8</div><div class="dl-inst">CMD</div><div class="dl-body">["gunicorn", "mysite.wsgi:application", "--bind", "0.0.0.0:8000"]</div><div class="dl-note">start server</div></div>
+      </div>
+
+      <h3>Full Dockerfile</h3>
+      <div class="code-block">
+        <div class="code-header"><span class="code-filename">Dockerfile</span><span class="code-lang lang-bash">Docker</span></div>
+        <pre><code><span class="cm"># ── Stage: build ─────────────────────────────────────</span>
+<span class="kw">FROM</span> python:3.12-slim <span class="kw">AS</span> base
+
+<span class="kw">ENV</span> PYTHONDONTWRITEBYTECODE=<span class="nu">1</span> \
+    PYTHONUNBUFFERED=<span class="nu">1</span>
+
+<span class="kw">WORKDIR</span> /app
+
+<span class="cm"># Install system deps needed by psycopg2</span>
+<span class="kw">RUN</span> apt-get update <span class="op">&amp;&amp;</span> apt-get install -y \
+    libpq-dev gcc \
+    <span class="op">&amp;&amp;</span> rm -rf /var/lib/apt/lists/*
+
+<span class="cm"># Install Python deps first (better layer caching)</span>
+<span class="kw">COPY</span> requirements.txt .
+<span class="kw">RUN</span> pip install --no-cache-dir -r requirements.txt
+
+<span class="cm"># Copy source code</span>
+<span class="kw">COPY</span> . .
+
+<span class="cm"># Collect static files</span>
+<span class="kw">RUN</span> python manage.py collectstatic --no-input
+
+<span class="kw">EXPOSE</span> <span class="nu">8000</span>
+
+<span class="cm"># Production server</span>
+<span class="kw">CMD</span> [<span class="st">"gunicorn"</span>, <span class="st">"mysite.wsgi:application"</span>, \
+     <span class="st">"--bind"</span>, <span class="st">"0.0.0.0:8000"</span>, \
+     <span class="st">"--workers"</span>, <span class="st">"4"</span>, \
+     <span class="st">"--timeout"</span>, <span class="st">"120"</span>]</code></pre>
+      </div>
+
+      <h3>.dockerignore — keep the image lean</h3>
+      <div class="code-block">
+        <div class="code-header"><span class="code-filename">.dockerignore</span><span class="code-lang lang-txt">text</span></div>
+        <pre><code>.env                 <span class="cm"># never bake secrets into the image</span>
+.git
+.gitignore
+*.pyc
+__pycache__/
+*.md
+tests/
+.venv/
+node_modules/
+staticfiles/         <span class="cm"># generated by collectstatic</span></code></pre>
+      </div>
+
+      <div class="callout callout-key">
+        <strong>🔑 Layer caching tip</strong>
+        Copy <code class="ic">requirements.txt</code> and run <code class="ic">pip install</code> <em>before</em> copying your source code. Docker caches each layer; this way, adding a new Python file doesn't trigger a full dependency re-install on every build.
+      </div>
+
+      <h2>Build &amp; Run</h2>
+      <div class="code-block">
+        <div class="code-header"><span class="code-filename">terminal</span><span class="code-lang lang-bash">bash</span></div>
+        <pre><code><span class="cm"># Build the image</span>
+docker build -t mysite:latest .
+
+<span class="cm"># Run locally, injecting the .env file</span>
+docker run --env-file .env -p 8000:8000 mysite:latest
+
+<span class="cm"># Inspect layers (great for debugging size)</span>
+docker history mysite:latest</code></pre>
+      </div>
+    </section>
+
+    <!-- ══════════════════════════ COMPOSE ══════════════════════════ -->
+    <section id="compose" class="section">
+      <h1>Docker <em>Compose</em></h1>
+      <p class="lead">Wire web, database, and reverse-proxy into one declarative file. Start everything with a single command.</p>
+
+      <div class="callout callout-info">
+        <strong>ℹ️ What Compose adds</strong>
+        Docker Compose creates an isolated network for your services, mounts volumes for persistent data, manages startup order with <code class="ic">depends_on</code>, and lets you override settings per-environment.
+      </div>
+
+      <h2>The Full docker-compose.yml</h2>
+
+      <div class="compare-toggle">
+        <button type="button" class="compare-btn active" onclick="toggleCompare('compose','dev',this)">Development</button>
+        <button type="button" class="compare-btn" onclick="toggleCompare('compose','prod',this)">Production</button>
+      </div>
+        <div id="compose-dev" class="compare-content active">
+          <div class="code-block">
+            <div class="code-header"><span class="code-filename">docker-compose.yml  (dev)</span><span class="code-lang lang-yaml">YAML</span></div>
+            <pre><code><span class="va">version</span><span class="op">:</span> <span class="st">'3.9'</span>
+
+<span class="va">services</span><span class="op">:</span>
+
+  <span class="va">db</span><span class="op">:</span>
+    <span class="va">image</span><span class="op">:</span> postgres:16-alpine
+    <span class="va">environment</span><span class="op">:</span>
+      <span class="va">POSTGRES_DB</span><span class="op">:</span>       <span class="op">${</span>DB_NAME<span class="op">}</span>
+      <span class="va">POSTGRES_USER</span><span class="op">:</span>     <span class="op">${</span>DB_USER<span class="op">}</span>
+      <span class="va">POSTGRES_PASSWORD</span><span class="op">:</span> <span class="op">${</span>DB_PASSWORD<span class="op">}</span>
+    <span class="va">volumes</span><span class="op">:</span>
+      - pgdata:/var/lib/postgresql/data
+    <span class="va">ports</span><span class="op">:</span>
+      - <span class="st">"5432:5432"</span>   <span class="cm"># expose for local GUI tools</span>
+
+  <span class="va">web</span><span class="op">:</span>
+    <span class="va">build</span><span class="op">:</span> .
+    <span class="va">command</span><span class="op">:</span> python manage.py runserver 0.0.0.0:8000
+    <span class="va">env_file</span><span class="op">:</span>
+      - .env
+    <span class="va">volumes</span><span class="op">:</span>
+      - .:/app         <span class="cm"># live reload: mounts source code</span>
+    <span class="va">ports</span><span class="op">:</span>
+      - <span class="st">"8000:8000"</span>
+    <span class="va">depends_on</span><span class="op">:</span>
+      - db
+
+<span class="va">volumes</span><span class="op">:</span>
+  <span class="va">pgdata</span><span class="op">:</span></code></pre>
+          </div>
+        </div>
+        <div id="compose-prod" class="compare-content">
+          <div class="code-block">
+            <div class="code-header"><span class="code-filename">docker-compose.yml  (prod)</span><span class="code-lang lang-yaml">YAML</span></div>
+            <pre><code><span class="va">version</span><span class="op">:</span> <span class="st">'3.9'</span>
+
+<span class="va">services</span><span class="op">:</span>
+
+  <span class="va">db</span><span class="op">:</span>
+    <span class="va">image</span><span class="op">:</span> postgres:16-alpine
+    <span class="va">restart</span><span class="op">:</span> always
+    <span class="va">environment</span><span class="op">:</span>
+      <span class="va">POSTGRES_DB</span><span class="op">:</span>       <span class="op">${</span>DB_NAME<span class="op">}</span>
+      <span class="va">POSTGRES_USER</span><span class="op">:</span>     <span class="op">${</span>DB_USER<span class="op">}</span>
+      <span class="va">POSTGRES_PASSWORD</span><span class="op">:</span> <span class="op">${</span>DB_PASSWORD<span class="op">}</span>
+    <span class="va">volumes</span><span class="op">:</span>
+      - pgdata:/var/lib/postgresql/data
+    <span class="cm">    # no ports: — not exposed outside the Docker network</span>
+
+  <span class="va">web</span><span class="op">:</span>
+    <span class="va">image</span><span class="op">:</span> ghcr.io/yourorg/mysite:latest   <span class="cm"># pre-built image</span>
+    <span class="va">restart</span><span class="op">:</span> always
+    <span class="va">env_file</span><span class="op">:</span>
+      - .env.production
+    <span class="va">depends_on</span><span class="op">:</span>
+      - db
+    <span class="va">expose</span><span class="op">:</span>
+      - <span class="st">"8000"</span>       <span class="cm"># visible to nginx, not the host</span>
+
+  <span class="va">nginx</span><span class="op">:</span>
+    <span class="va">image</span><span class="op">:</span> nginx:alpine
+    <span class="va">restart</span><span class="op">:</span> always
+    <span class="va">ports</span><span class="op">:</span>
+      - <span class="st">"80:80"</span>
+      - <span class="st">"443:443"</span>
+    <span class="va">volumes</span><span class="op">:</span>
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf
+      - staticfiles:/app/staticfiles
+      - certbot-etc:/etc/letsencrypt
+    <span class="va">depends_on</span><span class="op">:</span>
+      - web
+
+<span class="va">volumes</span><span class="op">:</span>
+  <span class="va">pgdata</span><span class="op">:</span>
+  <span class="va">staticfiles</span><span class="op">:</span>
+  <span class="va">certbot-etc</span><span class="op">:</span></code></pre>
+          </div>
+        </div>
+
+      <h2>Essential Commands</h2>
+      <div class="code-block">
+        <div class="code-header"><span class="code-filename">terminal</span><span class="code-lang lang-bash">bash</span></div>
+        <pre><code><span class="cm"># Start all services in the background</span>
+docker compose up -d
+
+<span class="cm"># Run migrations inside the running web container</span>
+docker compose exec web python manage.py migrate
+
+<span class="cm"># Create a superuser</span>
+docker compose exec web python manage.py createsuperuser
+
+<span class="cm"># Tail logs from all services</span>
+docker compose logs -f
+
+<span class="cm"># Rebuild after Dockerfile changes</span>
+docker compose up -d --build
+
+<span class="cm"># Stop and remove containers (keeps volumes)</span>
+docker compose down
+
+<span class="cm"># Stop and remove containers AND volumes (wipes db!)</span>
+docker compose down -v</code></pre>
+      </div>
+
+      <h3>Nginx config for Django</h3>
+      <div class="code-block">
+        <div class="code-header"><span class="code-filename">nginx.conf</span><span class="code-lang lang-txt">Nginx</span></div>
+        <pre><code>server {
+    listen 80;
+    server_name yourdomain.com;
+
+    <span class="cm"># Serve collected static files directly (no Django)</span>
+    location /static/ {
+        alias /app/staticfiles/;
+    }
+
+    <span class="cm"># Proxy everything else to Gunicorn</span>
+    location / {
+        proxy_pass         http://web:8000;
+        proxy_set_header   Host              $host;
+        proxy_set_header   X-Real-IP         $remote_addr;
+        proxy_set_header   X-Forwarded-For   $proxy_add_x_forwarded_for;
+        proxy_set_header   X-Forwarded-Proto $scheme;
+    }
+}</code></pre>
+      </div>
+    </section>
+
+    <!-- ══════════════════════════ CI/CD ══════════════════════════ -->
+    <section id="cicd" class="section">
+      <h1>CI/CD <em>Pipelines</em></h1>
+      <p class="lead">Automate the path from git push to live production — tests run, image builds, and the server updates, without a single manual step.</p>
+
+      <h2>What CI/CD Actually Does</h2>
+      <div class="cicd-grid">
+        <div class="cicd-card ci">
+          <div class="cicd-name">Continuous Integration</div>
+          <div class="cicd-desc">On every push, automatically run tests, linting, and security checks. Blocks merges on failure.</div>
+        </div>
+        <div class="cicd-card cd">
+          <div class="cicd-name">Continuous Delivery</div>
+          <div class="cicd-desc">Builds a Docker image and pushes it to a container registry. Ready to deploy, awaiting approval.</div>
+        </div>
+        <div class="cicd-card mon">
+          <div class="cicd-name">Continuous Deployment</div>
+          <div class="cicd-desc">Fully automated — pushes to main automatically trigger deployment to the production server.</div>
+        </div>
+      </div>
+
+      <h2>GitHub Actions Workflow</h2>
+      <div class="code-block">
+        <div class="code-header"><span class="code-filename">.github/workflows/deploy.yml</span><span class="code-lang lang-yaml">YAML</span></div>
+        <pre><code><span class="va">name</span><span class="op">:</span> Test → Build → Deploy
+
+<span class="va">on</span><span class="op">:</span>
+  <span class="va">push</span><span class="op">:</span>
+    <span class="va">branches</span><span class="op">:</span> [main]
+  <span class="va">pull_request</span><span class="op">:</span>
+    <span class="va">branches</span><span class="op">:</span> [main]
+
+<span class="va">env</span><span class="op">:</span>
+  <span class="va">REGISTRY</span><span class="op">:</span> ghcr.io
+  <span class="va">IMAGE</span><span class="op">:</span>    ghcr.io/<span class="op">${{</span> github.repository <span class="op">}}</span>
+
+<span class="va">jobs</span><span class="op">:</span>
+
+  <span class="cm"># ── Job 1: Run tests ──────────────────────────────</span>
+  <span class="va">test</span><span class="op">:</span>
+    <span class="va">runs-on</span><span class="op">:</span> ubuntu-latest
+    <span class="va">services</span><span class="op">:</span>
+      <span class="va">postgres</span><span class="op">:</span>
+        <span class="va">image</span><span class="op">:</span> postgres:16
+        <span class="va">env</span><span class="op">:</span>
+          <span class="va">POSTGRES_DB</span><span class="op">:</span>       testdb
+          <span class="va">POSTGRES_USER</span><span class="op">:</span>     postgres
+          <span class="va">POSTGRES_PASSWORD</span><span class="op">:</span> postgres
+        <span class="va">options</span><span class="op">:</span> >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    <span class="va">steps</span><span class="op">:</span>
+      - <span class="va">uses</span><span class="op">:</span> actions/checkout@v4
+      - <span class="va">uses</span><span class="op">:</span> actions/setup-python@v5
+        <span class="va">with</span><span class="op">:</span> { python-version: <span class="st">'3.12'</span> }
+      - <span class="va">name</span><span class="op">:</span> Install dependencies
+        <span class="va">run</span><span class="op">:</span> pip install -r requirements.txt
+      - <span class="va">name</span><span class="op">:</span> Run tests
+        <span class="va">env</span><span class="op">:</span>
+          <span class="va">DEBUG</span><span class="op">:</span>       <span class="kw">True</span>
+          <span class="va">SECRET_KEY</span><span class="op">:</span>  ci-only-not-real
+          <span class="va">DB_HOST</span><span class="op">:</span>     localhost
+          <span class="va">DB_PASSWORD</span><span class="op">:</span> postgres
+        <span class="va">run</span><span class="op">:</span> pytest --tb=short -q
+
+  <span class="cm"># ── Job 2: Build &amp; push image (main only) ─────────</span>
+  <span class="va">build-and-push</span><span class="op">:</span>
+    <span class="va">needs</span><span class="op">:</span> test
+    <span class="va">if</span><span class="op">:</span> github.ref == <span class="st">'refs/heads/main'</span>
+    <span class="va">runs-on</span><span class="op">:</span> ubuntu-latest
+    <span class="va">permissions</span><span class="op">:</span>
+      <span class="va">contents</span><span class="op">:</span> read
+      <span class="va">packages</span><span class="op">:</span> write
+
+    <span class="va">steps</span><span class="op">:</span>
+      - <span class="va">uses</span><span class="op">:</span> actions/checkout@v4
+      - <span class="va">name</span><span class="op">:</span> Log in to GHCR
+        <span class="va">uses</span><span class="op">:</span> docker/login-action@v3
+        <span class="va">with</span><span class="op">:</span>
+          <span class="va">registry</span><span class="op">:</span> <span class="op">${{</span> env.REGISTRY <span class="op">}}</span>
+          <span class="va">username</span><span class="op">:</span> <span class="op">${{</span> github.actor <span class="op">}}</span>
+          <span class="va">password</span><span class="op">:</span> <span class="op">${{</span> secrets.GITHUB_TOKEN <span class="op">}}</span>
+      - <span class="va">name</span><span class="op">:</span> Build &amp; push
+        <span class="va">uses</span><span class="op">:</span> docker/build-push-action@v5
+        <span class="va">with</span><span class="op">:</span>
+          <span class="va">push</span><span class="op">:</span> <span class="kw">true</span>
+          <span class="va">tags</span><span class="op">:</span> <span class="op">${{</span> env.IMAGE <span class="op">}}</span>:latest
+
+  <span class="cm"># ── Job 3: Deploy to server ───────────────────────</span>
+  <span class="va">deploy</span><span class="op">:</span>
+    <span class="va">needs</span><span class="op">:</span> build-and-push
+    <span class="va">runs-on</span><span class="op">:</span> ubuntu-latest
+    <span class="va">steps</span><span class="op">:</span>
+      - <span class="va">name</span><span class="op">:</span> SSH &amp; deploy
+        <span class="va">uses</span><span class="op">:</span> appleboy/ssh-action@v1
+        <span class="va">with</span><span class="op">:</span>
+          <span class="va">host</span><span class="op">:</span>     <span class="op">${{</span> secrets.SERVER_HOST <span class="op">}}</span>
+          <span class="va">username</span><span class="op">:</span> <span class="op">${{</span> secrets.SERVER_USER <span class="op">}}</span>
+          <span class="va">key</span><span class="op">:</span>      <span class="op">${{</span> secrets.SERVER_SSH_KEY <span class="op">}}</span>
+          <span class="va">script</span><span class="op">:</span> |
+            cd /srv/mysite
+            docker compose pull
+            docker compose up -d --no-deps web
+            docker compose exec -T web python manage.py migrate</code></pre>
+      </div>
+
+      <div class="callout callout-warn">
+        <strong>🔐 GitHub Secrets</strong>
+        Store sensitive values in <strong>Settings → Secrets → Actions</strong> on your repo. The workflow reads them as <code class="ic">${{ secrets.MY_SECRET }}</code> — they never appear in logs. Required secrets for this workflow: <code class="ic">SERVER_HOST</code>, <code class="ic">SERVER_USER</code>, <code class="ic">SERVER_SSH_KEY</code>.
+      </div>
+
+      <h2>Job Dependency Graph</h2>
+      <div class="pipeline">
+        <div class="pipe-stage" style="border-color:rgba(56,189,248,0.4)">
+          <div class="pipe-icon">🧪</div>
+          <div class="pipe-name">test</div>
+          <div class="pipe-sub">all branches</div>
+        </div>
+        <div class="pipe-arrow">
+          <div>→</div><div class="pipe-arrow-lbl">needs: test</div>
+        </div>
+        <div class="pipe-stage" style="border-color:rgba(244,114,182,0.4)">
+          <div class="pipe-icon">🐳</div>
+          <div class="pipe-name">build-push</div>
+          <div class="pipe-sub">main only</div>
+        </div>
+        <div class="pipe-arrow">
+          <div>→</div><div class="pipe-arrow-lbl">needs: build</div>
+        </div>
+        <div class="pipe-stage" style="border-color:rgba(74,222,128,0.4)">
+          <div class="pipe-icon">🚀</div>
+          <div class="pipe-name">deploy</div>
+          <div class="pipe-sub">main only</div>
+        </div>
+      </div>
+
+      <div class="callout callout-tip">
+        <strong>💡 PR Safety Net</strong>
+        The <code class="ic">test</code> job runs on <em>all</em> branches including pull requests. Only <code class="ic">build-push</code> and <code class="ic">deploy</code> are gated to the <code class="ic">main</code> branch — this means every PR gets tested automatically before it can merge.
+      </div>
+    </section>
+
+    <!-- ══════════════════════════ CHECKLIST ══════════════════════════ -->
+    <section id="checklist" class="section">
+      <h1>Deploy <em>Checklist</em></h1>
+      <p class="lead">Click each item as you complete it. Don't go live until everything is ticked.</p>
+
+      <h3>Secrets &amp; Configuration</h3>
+      <div class="checklist">
+        <div class="chk-item" onclick="tick(this)"><div class="chk-box"></div><div class="chk-text"><strong>DEBUG = False</strong> — confirmed via python-decouple reading from the prod .env</div><span class="chk-badge pill pill-orange">critical</span></div>
+        <div class="chk-item" onclick="tick(this)"><div class="chk-box"></div><div class="chk-text"><strong>SECRET_KEY</strong> is a unique, random 50-character string — not the Django default</div><span class="chk-badge pill pill-orange">critical</span></div>
+        <div class="chk-item" onclick="tick(this)"><div class="chk-box"></div><div class="chk-text"><strong>ALLOWED_HOSTS</strong> lists only your real domain(s) — no <code class="ic">*</code> wildcard</div><span class="chk-badge pill pill-orange">critical</span></div>
+        <div class="chk-item" onclick="tick(this)"><div class="chk-box"></div><div class="chk-text"><strong>.env</strong> is in <code class="ic">.gitignore</code> and not tracked in git history</div><span class="chk-badge pill pill-orange">critical</span></div>
+        <div class="chk-item" onclick="tick(this)"><div class="chk-box"></div><div class="chk-text">A <strong>.env.example</strong> file with dummy values exists for onboarding new devs</div><span class="chk-badge pill pill-muted">good practice</span></div>
+      </div>
+
+      <h3>Database</h3>
+      <div class="checklist">
+        <div class="chk-item" onclick="tick(this)"><div class="chk-box"></div><div class="chk-text">All <strong>migrations</strong> applied on the production database</div><span class="chk-badge pill pill-orange">critical</span></div>
+        <div class="chk-item" onclick="tick(this)"><div class="chk-box"></div><div class="chk-text">Database <strong>volume</strong> is mounted so data persists across container restarts</div><span class="chk-badge pill pill-orange">critical</span></div>
+        <div class="chk-item" onclick="tick(this)"><div class="chk-box"></div><div class="chk-text">Database port <strong>not exposed</strong> to the host in production Compose file</div><span class="chk-badge pill pill-blue">security</span></div>
+        <div class="chk-item" onclick="tick(this)"><div class="chk-box"></div><div class="chk-text"><strong>Backup strategy</strong> in place — automated pg_dump or managed DB service</div><span class="chk-badge pill pill-muted">ops</span></div>
+      </div>
+
+      <h3>Docker &amp; Containers</h3>
+      <div class="checklist">
+        <div class="chk-item" onclick="tick(this)"><div class="chk-box"></div><div class="chk-text"><strong>.dockerignore</strong> excludes <code class="ic">.env</code>, <code class="ic">.git</code>, and test files from the image</div><span class="chk-badge pill pill-blue">security</span></div>
+        <div class="chk-item" onclick="tick(this)"><div class="chk-box"></div><div class="chk-text">Production Compose uses <strong>specific image tags</strong>, not <code class="ic">:latest</code></div><span class="chk-badge pill pill-muted">good practice</span></div>
+        <div class="chk-item" onclick="tick(this)"><div class="chk-box"></div><div class="chk-text">All services have <code class="ic">restart: always</code> for automatic recovery</div><span class="chk-badge pill pill-muted">ops</span></div>
+        <div class="chk-item" onclick="tick(this)"><div class="chk-box"></div><div class="chk-text"><strong>collectstatic</strong> runs in Dockerfile so Nginx serves files directly</div><span class="chk-badge pill pill-green">performance</span></div>
+      </div>
+
+      <h3>HTTP &amp; Security</h3>
+      <div class="checklist">
+        <div class="chk-item" onclick="tick(this)"><div class="chk-box"></div><div class="chk-text"><strong>HTTPS</strong> configured — TLS certificate via Let's Encrypt / Certbot</div><span class="chk-badge pill pill-blue">security</span></div>
+        <div class="chk-item" onclick="tick(this)"><div class="chk-box"></div><div class="chk-text"><strong>SECURE_SSL_REDIRECT = True</strong> — HTTP requests redirected to HTTPS</div><span class="chk-badge pill pill-blue">security</span></div>
+        <div class="chk-item" onclick="tick(this)"><div class="chk-box"></div><div class="chk-text"><strong>HSTS headers</strong> enabled — SECURE_HSTS_SECONDS set to ≥ 31536000</div><span class="chk-badge pill pill-blue">security</span></div>
+        <div class="chk-item" onclick="tick(this)"><div class="chk-box"></div><div class="chk-text">Nginx configured to serve <strong>static files</strong> — not proxied through Gunicorn</div><span class="chk-badge pill pill-green">performance</span></div>
+      </div>
+
+      <h3>CI/CD &amp; Monitoring</h3>
+      <div class="checklist">
+        <div class="chk-item" onclick="tick(this)"><div class="chk-box"></div><div class="chk-text"><strong>All tests pass</strong> in the CI pipeline before deployment runs</div><span class="chk-badge pill pill-orange">critical</span></div>
+        <div class="chk-item" onclick="tick(this)"><div class="chk-box"></div><div class="chk-text">Server SSH keys stored as <strong>GitHub Secrets</strong> — not in the workflow file</div><span class="chk-badge pill pill-blue">security</span></div>
+        <div class="chk-item" onclick="tick(this)"><div class="chk-box"></div><div class="chk-text"><strong>Error logging</strong> set up — Sentry, Datadog, or Django's ADMINS email</div><span class="chk-badge pill pill-muted">ops</span></div>
+        <div class="chk-item" onclick="tick(this)"><div class="chk-box"></div><div class="chk-text"><strong>Uptime monitoring</strong> active — UptimeRobot, Betterstack, or similar</div><span class="chk-badge pill pill-muted">ops</span></div>
+      </div>
+    </section>
+
+    <!-- ══════════════════════════ QUIZ ══════════════════════════ -->
+    <section id="quiz" class="section">
+      <h1>Knowledge <em>Quiz</em></h1>
+      <p class="lead">Six questions across environment variables, Docker, Compose, and CI/CD. Click to reveal the explanation.</p>
+
+      <div class="quiz-q">
+        <div class="quiz-text">1. You call <code class="ic">config('DEBUG', default=False, cast=bool)</code> in <code class="ic">settings.py</code>. Your <code class="ic">.env</code> file contains <code class="ic">DEBUG=True</code>. What value does Django receive?</div>
+        <div class="quiz-options">
+          <button class="quiz-opt" onclick="answer(this,'wrong','The string &quot;True&quot; from the .env file is cast to a Python bool by the cast=bool argument.')">The string "True" — cast=bool is ignored</button>
+          <button class="quiz-opt" onclick="answer(this,'correct','✓ python-decouple reads the raw string &quot;True&quot; from the .env file and applies cast=bool, converting it to Python\'s True boolean. The default=False is only used if the key is missing entirely.')">Python True boolean — decouple applies the cast</button>
+          <button class="quiz-opt" onclick="answer(this,'wrong','The default is only used when the variable is absent — DEBUG is present in .env.')">Python False — the default always wins</button>
+        </div>
+        <div class="quiz-feedback"></div>
+      </div>
+
+      <div class="quiz-q">
+        <div class="quiz-text">2. Why should you copy <code class="ic">requirements.txt</code> and run <code class="ic">pip install</code> <em>before</em> copying your full source code in a Dockerfile?</div>
+        <div class="quiz-options">
+          <button class="quiz-opt" onclick="answer(this,'wrong','pip install does not depend on source code being present. The reason is about build speed, not correctness.')">pip install fails if source code is present first</button>
+          <button class="quiz-opt" onclick="answer(this,'correct','✓ Docker caches each instruction as a layer. If you copy source code first, any file change invalidates that layer and all subsequent ones — forcing a full pip install on every build. By separating deps from code, pip runs only when requirements.txt actually changes.')">Docker layer caching — dep layer is only re-run when requirements.txt changes</button>
+          <button class="quiz-opt" onclick="answer(this,'wrong','Python imports at runtime, not at build time.')">Python can only import packages installed before source code</button>
+        </div>
+        <div class="quiz-feedback"></div>
+      </div>
+
+      <div class="quiz-q">
+        <div class="quiz-text">3. In the production <code class="ic">docker-compose.yml</code>, the <code class="ic">db</code> service has no <code class="ic">ports:</code> entry. How can the <code class="ic">web</code> service still connect to it?</div>
+        <div class="quiz-options">
+          <button class="quiz-opt" onclick="answer(this,'wrong','Docker Compose does create a network, but ports: is not required for internal communication — it only controls host exposure.')">It cannot — ports: is required for any network connection</button>
+          <button class="quiz-opt" onclick="answer(this,'correct','✓ Docker Compose automatically creates an internal bridge network for all services. Services can reach each other by service name (e.g. DB_HOST=db) on any port without ports: being defined. ports: only exposes a port to the host machine — unnecessary for internal traffic and a security risk for databases.')">Docker Compose creates a private network; services talk to each other by name without ports:</button>
+          <button class="quiz-opt" onclick="answer(this,'wrong','There is no special localhost tunnel in Docker — services communicate via the Compose network.')">Docker maps all services to localhost automatically</button>
+        </div>
+        <div class="quiz-feedback"></div>
+      </div>
+
+      <div class="quiz-q">
+        <div class="quiz-text">4. The GitHub Actions workflow has <code class="ic">needs: test</code> on the <code class="ic">build-and-push</code> job. What happens if the <code class="ic">test</code> job fails?</div>
+        <div class="quiz-options">
+          <button class="quiz-opt" onclick="answer(this,'wrong','needs: creates a hard dependency. Failure in an upstream job cancels all dependent jobs.')">build-and-push runs anyway and marks itself as a warning</button>
+          <button class="quiz-opt" onclick="answer(this,'correct','✓ needs: creates a strict dependency chain. If test fails, GitHub Actions automatically cancels all jobs that list it as a dependency — including build-and-push and deploy. No broken code can reach production.')">build-and-push and deploy are both cancelled — no broken code reaches production</button>
+          <button class="quiz-opt" onclick="answer(this,'wrong','needs: is not optional — it always enforces the dependency.')">build-and-push runs only if you add a manual approval gate</button>
+        </div>
+        <div class="quiz-feedback"></div>
+      </div>
+
+      <div class="quiz-q">
+        <div class="quiz-text">5. You accidentally commit your <code class="ic">SECRET_KEY</code> to a public GitHub repo. You immediately delete the commit. Are you safe?</div>
+        <div class="quiz-options">
+          <button class="quiz-opt" onclick="answer(this,'wrong','Git history is distributed. Anyone who cloned or forked the repo before the deletion has the key. GitHub also caches commits for a while. Deleting the commit is not enough.')">Yes — the key is gone from history</button>
+          <button class="quiz-opt" onclick="answer(this,'correct','✓ No. Git history is public and cached — bots scan GitHub continuously for leaked secrets. Even a commit that lasted seconds may have been captured. You must immediately rotate the SECRET_KEY (generate a new one in settings), invalidating all existing sessions and JWTs.')">No — rotate the SECRET_KEY immediately; deletion does not help</button>
+          <button class="quiz-opt" onclick="answer(this,'wrong','git rebase can rewrite local history but the remote commit was already public and potentially cached.')">Yes — git rebase -i removes all traces from the remote</button>
+        </div>
+        <div class="quiz-feedback"></div>
+      </div>
+
+      <div class="quiz-q">
+        <div class="quiz-text">6. Which command applies database migrations inside an already-running Compose stack without restarting the web container?</div>
+        <div class="quiz-options">
+          <button class="quiz-opt" onclick="answer(this,'wrong','docker compose run creates a new container — it does not exec into the running one, and may miss the current network state.')">docker compose run web python manage.py migrate</button>
+          <button class="quiz-opt" onclick="answer(this,'wrong','docker compose up --build rebuilds the image and restarts containers.')">docker compose up --build</button>
+          <button class="quiz-opt" onclick="answer(this,'correct','✓ docker compose exec runs a command inside an already-running container. It connects to the live web service, executes migrate, and exits — the container keeps running unchanged. The -T flag disables pseudo-TTY allocation, which is required for non-interactive use in CI scripts.')">docker compose exec web python manage.py migrate</button>
+        </div>
+        <div class="quiz-feedback"></div>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<script>
+  function tick(el) {
+    el.classList.toggle('checked');
+    el.querySelector('.chk-box').textContent = el.classList.contains('checked') ? '✓' : '';
+  }
+</script>
+
+</body>
+</html>
