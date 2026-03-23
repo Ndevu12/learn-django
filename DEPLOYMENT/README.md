@@ -4,7 +4,7 @@
 
 This module teaches how to move a Django app from **local development** toward **production**: keeping secrets out of git (**python-decouple** / `.env`), **containerizing** the app, orchestrating **web + database + reverse proxy** with Compose, and automating **test → build → deploy** with a pipeline (e.g. **GitHub Actions**).
 
-There is **no bundled `manage.py` project** in this folder. You apply the patterns to the **[CBV](../CBV/cbv_project/)** or **[AUTH](../AUTH/auth_project/)** sample apps, or to any Django project you already have.
+You can apply the patterns to **`[deployment_project](deployment_project/)`** (JWT + Books API, same stack as Auth, under this module), or to **[CBV](../CBV/cbv_project/)**, **[AUTH](../AUTH/auth_project/)**, or any Django project you already have.
 
 ---
 
@@ -13,9 +13,12 @@ There is **no bundled `manage.py` project** in this folder. You apply the patter
 ```
 DEPLOYMENT/
 ├── README.md                        # This file
-├── deployment-best-practices.html     # Interactive guide (GitHub Pages)
-└── styles/index.css                  # Module-specific layout (pipeline, env cards, checklist, …)
+├── deployment_project/              # Sample Django project: JWT + books API, .env, Docker, requirements.txt
+├── deployment-best-practices.html   # Interactive guide (GitHub Pages)
+└── styles/index.css                 # Module-specific layout (pipeline, env cards, checklist, …)
 ```
+
+CI for that sample app: `.github/workflows/deployment-project-ci.yml` (check, migrate SQLite, tests).
 
 Shared chrome (header, nav, typography, code blocks, quizzes) comes from the repo root: [`styles/`](../styles/), [`scripts/header.js`](../scripts/header.js).
 
@@ -55,7 +58,7 @@ Shared chrome (header, nav, typography, code blocks, quizzes) comes from the rep
 
 ## Applying this module to a project
 
-1. Complete or clone a Django app (e.g. `CBV/cbv_project` or `AUTH/auth_project`).  
+1. Use `DEPLOYMENT/deployment_project`, or another sample app (e.g. `CBV/cbv_project` or `AUTH/auth_project`).  
 2. Walk through the guide section by section: add `.env`, adjust `settings.py`, then introduce a `Dockerfile` and `docker-compose.yml` as shown.  
 3. Use the **checklist** before calling an environment “production ready.”  
 4. Adapt the sample **GitHub Actions** YAML to your repo name, registry, and host.
