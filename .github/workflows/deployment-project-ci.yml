@@ -1,0 +1,60 @@
+# CI: install deps, Django checks, migrate (SQLite), tests.
+# Configure secrets and variables in the repository (Settings → Secrets and variables → Actions).
+# Extend with image build/push or deploy jobs when you deploy to a registry or host.
+
+name: Deployment sample — CI
+
+on:
+  push:
+    paths:
+      - "DEPLOYMENT/deployment_project/**"
+      - ".github/workflows/deployment-project-ci.yml"
+  pull_request:
+    paths:
+      - "DEPLOYMENT/deployment_project/**"
+      - ".github/workflows/deployment-project-ci.yml"
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    working-directory: DEPLOYMENT/deployment_project
+
+jobs:
+  django-ci:
+    runs-on: ubuntu-latest
+    env:
+      # Required repository secret — never commit real keys in this file.
+      SECRET_KEY: ${{ secrets.DJANGO_SECRET_KEY }}
+      # Optional repository variables (non-sensitive); sensible defaults if unset.
+      DEBUG: ${{ vars.DJANGO_CI_DEBUG || 'True' }}
+      ALLOWED_HOSTS: ${{ vars.DJANGO_CI_ALLOWED_HOSTS || 'localhost,127.0.0.1' }}
+      DJANGO_SETTINGS_MODULE: deployment_project.settings
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Verify DJANGO_SECRET_KEY is configured
+        run: |
+          if [ -z "${SECRET_KEY}" ]; then
+            echo "::error::Missing Actions secret DJANGO_SECRET_KEY. Add it under Settings → Secrets and variables → Actions (see DEPLOYMENT/deployment_project/README.md)."
+            exit 1
+          fi
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: DEPLOYMENT/deployment_project/requirements.txt
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Django system check
+        run: python manage.py check
+
+      - name: Migrate (SQLite)
+        run: python manage.py migrate --noinput
+
+      - name: Run tests
+        run: python manage.py test
